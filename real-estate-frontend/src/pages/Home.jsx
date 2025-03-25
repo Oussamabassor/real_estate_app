@@ -27,6 +27,7 @@ import CTASection from '../components/CTASection';
 import PropertyGrid from '../components/PropertyGrid';
 import { useFeaturedProperties } from '../hooks/useProperties';
 import { PageTransition, FadeIn, SlideIn, StaggerChildren, StaggerItem } from '../components/PageAnimations';
+import Header from '../components/Header';
 
 const statsData = [
     { icon: HomeIcon, label: 'Properties', value: '1,000+' },
@@ -261,14 +262,15 @@ export default function Home() {
         );
     }
 
-    return (
+    // Render the main content
+    const HomeContent = () => (
         <AnimatePresence mode="wait">
             <PageTransition key="home">
                 <div className="min-h-screen bg-gray-50">
                     {/* Enhanced Hero Section with CTA */}
-                    <div className="relative min-h-screen">
+                    <div className="relative min-h-screen pt-16"> {/* Added padding-top for header space */}
                         {/* Background Video/Image */}
-                        <div className="absolute inset-0">
+                        <div className="absolute inset-0 top-16"> {/* Top offset for header */}
                             <div
                                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                                 style={{
@@ -279,7 +281,7 @@ export default function Home() {
                         </div>
 
                         {/* Hero Content */}
-                        <div className="relative min-h-screen flex items-center">
+                        <div className="relative min-h-[calc(100vh-4rem)] flex items-center"> {/* Adjusted height */}
                             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                                     {/* Left Column - Main Content */}
@@ -509,7 +511,7 @@ export default function Home() {
                                             Subscribe to our newsletter for exclusive property updates and market insights.
                                         </p>
                                     </div>
-                                    <div>
+                                    <div className="flex gap-4">
                                         <form className="flex gap-4">
                                             <input
                                                 type="email"
@@ -531,6 +533,13 @@ export default function Home() {
                 </div>
             </PageTransition>
         </AnimatePresence>
+    );
+
+    // Return the Layout with HomeContent
+    return (
+        <Layout>
+            <HomeContent />
+        </Layout>
     );
 }
 

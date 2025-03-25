@@ -1,48 +1,86 @@
 <?php
-// Simple database connection test
+// Set content type to plain text for better readability
+header('Content-Type: text/plain');
 
-require_once __DIR__ . '/utils/Database.php';
+echo "Database Connection Test\n";
+echo "=======================\n\n";
 
-header('Content-Type: text/html');
-echo "<h1>Database Connection Test</h1>";
+// Database configuration - hard-coded for direct testing
+$config = [
+    'host' => 'localhost',
+    'username' => 'root',
+    'password' => 'MSFadmin2005.', // Note the period at the end
+    'database' => 'real-estate',
+    'charset' => 'utf8mb4',
+    'port' => 3306
+];
+
+echo "Database Configuration:\n";
+echo "Host: {$config['host']}\n";
+echo "Database: {$config['database']}\n";
+echo "Username: {$config['username']}\n";
+echo "Password: " . str_repeat('*', strlen($config['password'])) . "\n\n";
 
 try {
-    $db = Database::getInstance()->getConnection();
-    echo "<p style='color: green;'>✅ Successfully connected to the database!</p>";
+    echo "Attempting to connect to MySQL...\n";
     
-    // Test querying a table
-    try {
-        $result = $db->query("SHOW TABLES");
-        $tables = $result->fetchAll(PDO::FETCH_COLUMN);
+    $dsn = "mysql:host={$config['host']};port={$config['port']}";
+    $pdo = new PDO($dsn, $config['username'], $config['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+    
+    echo "✅ Connected to MySQL server successfully.\n\n";
+    
+    // Check if database exists
+    echo "Checking if database exists...\n";
+    $stmt = $pdo->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$config['database']}'");
+    
+    if ($stmt->rowCount() === 0) {
+        echo "❌ Database '{$config['database']}' does not exist.\n";
+        echo "Visit /setup_database.php to create it.\n";
+    } else {
+        echo "✅ Database '{$config['database']}' exists.\n\n";
         
-        echo "<h2>Database Tables:</h2>";
-        if (count($tables) > 0) {
-            echo "<ul>";
-            foreach ($tables as $table) {
-                echo "<li>$table</li>";
-            }
-            echo "</ul>";
+        // Connect to database
+        echo "Connecting to the database...\n";
+        $pdo = new PDO(
+            "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']};port={$config['port']}",
+            $config['username'],
+            $config['password'],
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]
+        );
+        
+        echo "✅ Connected to the database successfully.\n\n";
+        
+        // Check tables
+        echo "Tables in database:\n";
+        $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (empty($tables)) {
+            echo "No tables found in the database.\n";
+            echo "Visit /setup_database.php to create tables.\n";
         } else {
-            echo "<p>No tables found in the database. You may need to run your schema creation script.</p>";
+            foreach ($tables as $table) {
+                echo "- $table\n";
+                $count = $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
+                echo "  Row count: $count\n";
+            }
         }
-    } catch (PDOException $e) {
-        echo "<p style='color: orange;'>Connected to database but couldn't query tables: " . $e->getMessage() . "</p>";
     }
-} catch (Exception $e) {
-    echo "<p style='color: red;'>❌ Failed to connect to the database: " . $e->getMessage() . "</p>";
+} catch (PDOException $e) {
+    echo "❌ Database connection error: " . $e->getMessage() . "\n";
+    echo "Error code: " . $e->getCode() . "\n\n";
     
-    // Show database config
-    echo "<h2>Database Configuration:</h2>";
-    echo "<pre>";
-    $config = require __DIR__ . '/config/database.php';
-    echo "Host: " . $config['host'] . "\n";
-    echo "Database: " . $config['database'] . "\n";
-    echo "Username: " . $config['username'] . "\n";
-    echo "Password: " . (empty($config['password']) ? "(empty)" : "(set)") . "\n";
-    echo "</pre>";
+    if ($e->getCode() === 1045) {
+        echo "This is an access denied error. Your username or password is incorrect.\n";
+        echo "Current password: " . $config['password'] . "\n";
+        echo "Double-check that the password includes any periods or special characters.\n";
+    } elseif ($e->getCode() === 2002) {
+        echo "This is a connection error. Make sure MySQL server is running and accessible.\n";
+    }
 }
-?>
 
-<p>
-    <a href="index.php">Back to API</a>
-</p>
+echo "\nTest completed at " . date('Y-m-d H:i:s');

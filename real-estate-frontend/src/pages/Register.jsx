@@ -100,14 +100,8 @@ export default function Register() {
     <Layout>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <Link to="/">
-            <img 
-              className="mx-auto h-12 w-auto" 
-              src="/logo.png" 
-              alt="LuxeStay"
-              onError={(e) => e.target.src = 'https://via.placeholder.com/120x48'} 
-            />
-          </Link>
+          {/* Removed problematic image */}
+          <h1 className="text-center text-2xl font-bold text-purple-600">LuxeStay</h1>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>

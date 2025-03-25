@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../utils/ApiResponse.php';
 require_once __DIR__ . '/../../utils/Cors.php';
+require_once __DIR__ . '/../../utils/Auth.php';
 require_once __DIR__ . '/../../models/User.php';
 
 // Handle CORS
@@ -18,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Get request data
 $data = json_decode(file_get_contents('php://input'), true);
 
+// Debug incoming data
+error_log("Registration attempt with: " . json_encode($data));
+
 // Validate required fields
 $errors = [];
 
@@ -33,8 +37,6 @@ if (empty($data['email'])) {
 
 if (empty($data['password'])) {
     $errors['password'] = 'Password is required';
-} elseif (strlen($data['password']) < 6) {
-    $errors['password'] = 'Password must be at least 6 characters';
 }
 
 // Return validation errors if any
@@ -48,31 +50,39 @@ $userModel = new User();
 $existingUser = $userModel->getByEmail($data['email']);
 
 if ($existingUser) {
+    error_log("Email already exists: " . $data['email']);
     echo ApiResponse::validationError(['email' => 'Email already exists']);
     exit;
 }
 
 // Create user
 try {
-    $user = $userModel->create([
+    $userData = [
         'name' => $data['name'],
         'email' => $data['email'],
-        'password' => $data['password'],
-        'is_admin' => 0,
-        'is_verified' => 1 // Auto-verify for testing
-    ]);
-
+        'password' => $data['password'], // Store as plain text (for demo only)
+        'role' => 'user'
+    ];
+    
+    error_log("Creating user with data: " . json_encode($userData));
+    
+    $user = $userModel->create($userData);
+    
+    if (!$user) {
+        throw new Exception('Failed to create user');
+    }
+    
     // Generate JWT token
-    require_once __DIR__ . '/../../utils/Auth.php';
     $token = Auth::generateToken($user);
-
+    
     // Return user data and token
     unset($user['password']);
-
+    
     echo ApiResponse::success([
         'user' => $user,
         'token' => $token
     ], 'User registered successfully', 201);
 } catch (Exception $e) {
+    error_log("Registration error: " . $e->getMessage());
     echo ApiResponse::error('Registration failed: ' . $e->getMessage(), null, 500);
 }

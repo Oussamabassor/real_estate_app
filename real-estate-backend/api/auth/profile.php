@@ -1,13 +1,14 @@
 <?php
 require_once __DIR__ . '/../../utils/ApiResponse.php';
+require_once __DIR__ . '/../../utils/Cors.php';
 require_once __DIR__ . '/../../utils/Auth.php';
 require_once __DIR__ . '/../../models/User.php';
 
-// Set headers
+// Handle CORS
+Cors::handleCors();
+
+// Set content type
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -22,6 +23,8 @@ if (!$currentUser) {
     echo ApiResponse::unauthorized('You must be logged in to access this resource');
     exit;
 }
+
+error_log("Retrieved user from token: " . json_encode($currentUser));
 
 $userModel = new User();
 

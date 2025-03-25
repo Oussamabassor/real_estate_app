@@ -1,19 +1,14 @@
 <?php
 require_once __DIR__ . '/../../utils/ApiResponse.php';
+require_once __DIR__ . '/../../utils/Cors.php';
 require_once __DIR__ . '/../../utils/Auth.php';
 require_once __DIR__ . '/../../models/User.php';
 
-// Set headers
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+// Handle CORS
+Cors::handleCors();
 
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+// Set content type
+header('Content-Type: application/json');
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -21,13 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get request body
+// Get request data
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data) {
-    echo ApiResponse::error('Invalid request data');
-    exit;
-}
+// Debug incoming data
+error_log("Login attempt with: " . json_encode($data));
 
 // Validate required fields
 if (empty($data['email']) || empty($data['password'])) {
@@ -38,34 +31,34 @@ if (empty($data['email']) || empty($data['password'])) {
     exit;
 }
 
-// Initialize user model
+// Get user by email
 $userModel = new User();
-
-// Check if user exists
 $user = $userModel->getByEmail($data['email']);
 
-if (!$user) {
+// Debug user retrieval
+if ($user) {
+    error_log("User found: " . json_encode($user));
+} else {
+    error_log("No user found with email: " . $data['email']);
     echo ApiResponse::error('Invalid email or password', null, 401);
     exit;
 }
 
-// Verify password
-if (!password_verify($data['password'], $user['password'])) {
+// For simplicity, compare passwords directly (since they're stored as plain text in your DB)
+// In a real app, you'd use password_verify() with hashed passwords
+if ($data['password'] !== $user['password']) {
+    error_log("Password mismatch for user: " . $data['email']);
     echo ApiResponse::error('Invalid email or password', null, 401);
     exit;
 }
 
-// Generate token
+// Generate JWT token
 $token = Auth::generateToken($user);
 
-// Return response
+// Return user data and token
+unset($user['password']);
+
 echo ApiResponse::success([
-    'user' => [
-        'id' => $user['id'],
-        'name' => $user['name'],
-        'email' => $user['email'],
-        'is_admin' => (bool) $user['is_admin'],
-        'is_verified' => (bool) $user['is_verified']
-    ],
+    'user' => $user,
     'token' => $token
 ], 'Login successful');

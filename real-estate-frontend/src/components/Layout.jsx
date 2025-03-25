@@ -18,15 +18,27 @@ export default function Layout({ children, hideFooter = false }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Debug visibility
-  console.log('Layout rendered with header visibility: true');
-  
+  // Force header to be visible with extreme z-index
+  const headerContainerStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999, // Very high z-index to ensure it's above everything
+    display: 'block',
+    visibility: 'visible',
+    pointerEvents: 'auto'
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Force header visibility */}
-      <Header isScrolled={isScrolled} className="z-50" />
+      <div style={headerContainerStyle} className="header-container">
+        <Header isScrolled={isScrolled} />
+      </div>
       
-      <main className="flex-grow">
+      {/* Add padding to prevent content from being hidden behind the header */}
+      <main className="flex-grow pt-16">
         {children}
       </main>
       

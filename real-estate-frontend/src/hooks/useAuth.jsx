@@ -4,58 +4,66 @@ import { authApi, userApi } from '../services/api';
 // Create auth context
 const AuthContext = createContext(null);
 
-// Debug mode
-const DEBUG_MODE = true;
-
 // Context provider component
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Load user on mount
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        if (DEBUG_MODE) {
-          console.log('🔍 Checking user authentication status...');
-        }
+        console.log('🔍 Checking user authentication status...');
         
         // Check if we have a token
         const token = localStorage.getItem('token');
         if (!token) {
-          if (DEBUG_MODE) console.log('⚠️ No token found, user not authenticated');
+          console.log('⚠️ No token found, user not authenticated');
           setLoading(false);
+          setInitialized(true);
           return;
+        }
+        
+        console.log('Token found in localStorage:', token.substring(0, 15) + '...');
+        
+        // For demo/test purposes, auto-login with a saved user
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            const parsedUser = JSON.parse(savedUser);
+            console.log('Found saved user data, auto-logging in:', parsedUser.email);
+            setUser(parsedUser);
+            setLoading(false);
+            setInitialized(true);
+            return;
+          } catch (e) {
+            console.error('Error parsing saved user:', e);
+            // Continue with API call if parsing fails
+          }
         }
         
         // Try to get user profile
         try {
-          if (DEBUG_MODE) console.log('🔍 Fetching user profile...');
-          
-          // In debug mode, we can use mock data if the API isn't ready
-          if (DEBUG_MODE) {
-            console.log('🛠️ Using debug mode for authentication');
-            setUser({
-              id: 1,
-              name: 'Debug User',
-              email: 'debug@example.com',
-              is_admin: true
-            });
-            setLoading(false);
-            return;
-          }
+          console.log('🔍 Fetching user profile...');
           
           const response = await userApi.getProfile();
+          console.log('Profile response:', response);
+          
           if (response.data.status === 'success') {
-            setUser(response.data.data);
+            const userData = response.data.data;
+            setUser(userData);
+            // Save user data in localStorage for persistence
+            localStorage.setItem('user', JSON.stringify(userData));
           } else {
-            throw new Error('Failed to get profile');
+            throw new Error(response.data.message || 'Failed to get profile');
           }
         } catch (err) {
           console.error('Error fetching user profile:', err);
           // Clear token if it's invalid
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setError('Authentication failed. Please log in again.');
         }
       } catch (err) {
@@ -63,6 +71,7 @@ export function AuthProvider({ children }) {
         setError(err.message);
       } finally {
         setLoading(false);
+        setInitialized(true);
       }
     };
 
@@ -75,28 +84,21 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      if (DEBUG_MODE) {
-        console.log('🔑 Login attempt:', credentials.email);
-      }
-
-      // For debug mode, use a mock login
-      if (DEBUG_MODE) {
-        console.log('🛠️ Using debug mode for login');
-        localStorage.setItem('token', 'debug-token-12345');
-        setUser({
-          id: 1,
-          name: 'Debug User',
-          email: credentials.email,
-          is_admin: true
-        });
-        return { success: true };
-      }
+      console.log('🔑 Login attempt:', credentials.email);
       
       const response = await authApi.login(credentials);
+      console.log('Login response:', response);
       
       if (response.data.status === 'success') {
         const { token, user } = response.data.data;
+        
+        // Store token and user data in localStorage for persistence
         localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        console.log('Token saved:', token.substring(0, 15) + '...');
+        console.log('User saved:', user);
+        
         setUser(user);
         return { success: true };
       } else {
@@ -104,8 +106,15 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message);
-      return { success: false, error: err.message };
+      let errorMessage = 'Login failed';
+      
+      if (err.response) {
+        errorMessage = err.response.data.message || 'Login failed';
+        console.log('Server error response:', err.response.data);
+      }
+      
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -113,9 +122,12 @@ export function AuthProvider({ children }) {
 
   // Logout function
   const logout = useCallback(() => {
+    console.log('Logging out user');
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
-    // No need to call API endpoint for logout in this implementation
+    // Reload the page to clear any cached state
+    window.location.href = '/';
   }, []);
 
   // Register function
@@ -124,26 +136,18 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
       
-      if (DEBUG_MODE) console.log('📝 Register attempt:', userData.email);
-      
-      // For debug mode, use a mock registration
-      if (DEBUG_MODE) {
-        console.log('🛠️ Using debug mode for registration');
-        localStorage.setItem('token', 'debug-token-12345');
-        setUser({
-          id: 1,
-          name: userData.name,
-          email: userData.email,
-          is_admin: false
-        });
-        return { success: true };
-      }
+      console.log('📝 Register attempt:', userData.email);
       
       const response = await authApi.register(userData);
+      console.log('Register response:', response);
       
       if (response.data.status === 'success') {
         const { token, user } = response.data.data;
+        
+        // Store token and user data in localStorage for persistence
         localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
         setUser(user);
         return { success: true };
       } else {
@@ -151,8 +155,15 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message);
-      return { success: false, error: err.message };
+      let errorMessage = 'Registration failed';
+      
+      if (err.response) {
+        errorMessage = err.response.data.message || 'Registration failed';
+        console.log('Server error response:', err.response.data);
+      }
+      
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -166,7 +177,8 @@ export function AuthProvider({ children }) {
     login,
     logout,
     register,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    initialized
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

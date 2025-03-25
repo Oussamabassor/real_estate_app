@@ -21,7 +21,8 @@ class Auth {
             'user_id' => $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'is_admin' => (bool)($user['is_admin'] ?? false),
+            'is_admin' => $user['role'] === 'admin',
+            'role' => $user['role'],
             'iat' => time(),
             'exp' => time() + (60 * 60 * 24 * 7) // Token valid for 7 days
         ];

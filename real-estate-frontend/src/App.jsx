@@ -16,19 +16,30 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, initialized } = useAuth();
   
-  if (loading) {
+  // Show loading screen while checking authentication
+  if (loading || !initialized) {
     return <LoadingScreen />;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
 };
 
 function App() {
-  // Don't use useAuth directly here - we don't need to since we're using it in ProtectedRoute
-  // Instead, we can check if the AuthProvider is working by logging something
-  console.log('App component rendered');
+  const { initialized } = useAuth();
+  
+  console.log('App rendered, auth initialized:', initialized);
+  
+  // Show loading screen while initializing auth
+  if (!initialized) {
+    return <LoadingScreen />;
+  }
   
   return (
     <Suspense fallback={<LoadingScreen />}>

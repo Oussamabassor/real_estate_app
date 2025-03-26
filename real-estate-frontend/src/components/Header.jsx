@@ -18,18 +18,6 @@ export default function Header({ isScrolled }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
-    // Debug information
-    console.log('Header component rendered', { isAuthenticated, user, initialized });
-  
-    useEffect(() => {
-        // Log authentication state on every render
-        console.log('Authentication state in Header:', { 
-            isAuthenticated, 
-            user: user ? `${user.name} (${user.email})` : 'No user',
-            initialized
-        });
-    }, [isAuthenticated, user, initialized]);
-
     // Reset menu state on route change
     useEffect(() => {
         setIsMenuOpen(false);

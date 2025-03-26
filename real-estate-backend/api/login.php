@@ -1,15 +1,16 @@
 <?php
+// Include the Cors utility
+require_once __DIR__ . '/../utils/Cors.php';
+require_once __DIR__ . '/../utils/ApiResponse.php';
+
+// Apply CORS headers first thing
+Cors::handleCors('http://localhost:5173');
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
-// Set CORS headers
-header('Access-Control-Allow-Origin: http://localhost:5173');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-// Handle preflight OPTIONS requests
+// Handle preflight OPTIONS requests - already handled by Cors::handleCors()
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
     exit;
 }
 

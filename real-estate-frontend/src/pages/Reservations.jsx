@@ -80,21 +80,12 @@ export default function Reservations() {
     const [sortBy, setSortBy] = useState('date_desc');
     const [useMockData, setUseMockData] = useState(false);
 
-    // Debug mode
-    const DEBUG_MODE = true;
+    // Debug mode - turn off to remove unnecessary console logs
+    const DEBUG_MODE = false;
 
     useEffect(() => {
         // Check if we have a user and valid token
         const token = localStorage.getItem('token');
-        
-        if (DEBUG_MODE) {
-            console.log('Reservations component - Authentication state:', { 
-                isAuthenticated, 
-                hasValidToken,
-                user: user?.email,
-                hasToken: !!token
-            });
-        }
         
         // Only fetch if authenticated and valid token
         if (isAuthenticated) {
@@ -120,19 +111,8 @@ export default function Reservations() {
         try {
             setLoading(true);
             
-            if (DEBUG_MODE) {
-                console.log(`Fetching reservations... ${useMock ? '(using mock data)' : ''}`);
-                if (!useMock) {
-                    console.log('Auth token:', localStorage.getItem('token')?.substring(0, 15) + '...');
-                }
-            }
-            
             if (useMock) {
                 // Use mock data
-                if (DEBUG_MODE) {
-                    console.log('Using mock reservation data');
-                }
-                
                 setTimeout(() => {
                     setReservations(MOCK_RESERVATIONS);
                     setLoading(false);
@@ -153,10 +133,6 @@ export default function Reservations() {
             // Real API call
             const response = await reservationApi.getAll();
             
-            if (DEBUG_MODE) {
-                console.log('Reservations response:', response);
-            }
-            
             // Check if we have valid data in the response
             if (response && response.data && Array.isArray(response.data.data)) {
                 const reservationsData = response.data.data;
@@ -175,7 +151,8 @@ export default function Reservations() {
                                     }
                                 }
                             } catch (propErr) {
-                                console.error('Failed to fetch property details:', propErr);
+                                // Only log significant errors
+                                console.error('Failed to fetch property details');
                             }
                         })
                     );
@@ -187,12 +164,12 @@ export default function Reservations() {
                 setUseMockData(false);
             } else {
                 // If no data, fall back to mock
-                console.warn('No valid reservation data returned from API');
                 setUseMockData(true);
                 setReservations(MOCK_RESERVATIONS);
             }
         } catch (err) {
-            console.error('Error fetching reservations:', err);
+            // Only log the essential error information
+            console.error('Error fetching reservations');
             
             // Enhanced error handling to show more detail about auth errors
             if (err.response?.status === 401) {

@@ -3,9 +3,14 @@ import axios from 'axios';
 // Use your PHP backend URL
 export const BASE_URL = 'http://localhost:8000';
 
-console.log('🔧 API Configuration:', {
-  baseUrl: BASE_URL
-});
+// Debug mode
+const DEBUG_MODE = true;
+
+if (DEBUG_MODE) {
+  console.log('🔧 API Configuration:', {
+    baseUrl: BASE_URL
+  });
+}
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -15,19 +20,36 @@ const api = axios.create({
   }
 });
 
+// Function to get the current token
+const getAuthToken = () => {
+  const token = localStorage.getItem('token');
+  // Debug token retrieval
+  if (DEBUG_MODE) {
+    console.log('📥 Retrieved token:', token ? `${token.substring(0, 15)}...` : 'No token found');
+  }
+  return token;
+};
+
 // Add request interceptor to include the JWT token in the Authorization header
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     
-    console.log(`🔷 API Request: ${config.method.toUpperCase()} ${config.url}`, { 
-      headers: config.headers,
-      data: config.data,
-      params: config.params
-    });
+    if (DEBUG_MODE) {
+      console.log(`🔷 API Request: ${config.method.toUpperCase()} ${config.url}`, { 
+        headers: {
+          ...config.headers,
+          Authorization: config.headers.Authorization 
+            ? `${config.headers.Authorization.substring(0, 15)}...` 
+            : 'Not provided',
+        },
+        data: config.data,
+        params: config.params
+      });
+    }
     
     return config;
   },
@@ -40,10 +62,12 @@ api.interceptors.request.use(
 // API error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.config.method.toUpperCase()} ${response.config.url}`, {
-      status: response.status,
-      data: response.data
-    });
+    if (DEBUG_MODE) {
+      console.log(`✅ API Response: ${response.config.method.toUpperCase()} ${response.config.url}`, {
+        status: response.status,
+        data: response.data
+      });
+    }
     return response;
   },
   (error) => {
@@ -54,6 +78,28 @@ api.interceptors.response.use(
       url: error.config?.url,
       method: error.config?.method?.toUpperCase()
     });
+    
+    // Handle 401 errors (Unauthorized)
+    if (error.response && error.response.status === 401) {
+      // Check if we're already on the login page to avoid redirect loops
+      if (!window.location.href.includes('/login')) {
+        console.warn('🔒 Authentication token expired or invalid. Redirecting to login page...');
+        
+        // Clear invalid token
+        localStorage.removeItem('token');
+        
+        // Save the current location to redirect back after login
+        localStorage.setItem('redirectAfterLogin', window.location.pathname);
+        
+        // Optional: Show a message to user
+        // alert('Your session has expired. Please log in again.');
+        
+        // Redirect to login page
+        // Uncomment this to enable automatic redirect
+        // window.location.href = '/login';
+      }
+    }
+    
     throw error;
   }
 );

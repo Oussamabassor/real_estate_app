@@ -60,67 +60,71 @@ export default function Properties() {
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
-  const filteredProperties = properties
-    .filter((property) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (
-          !property.title.toLowerCase().includes(query) &&
-          !property.description.toLowerCase().includes(query)
-        ) {
-          return false;
-        }
-      }
+  // Add defensive check before filtering properties
+  const filteredProperties = Array.isArray(properties)
+    ? properties
+        .filter((property) => {
+          // Search filter
+          if (searchQuery && property) {
+            const query = searchQuery.toLowerCase();
+            if (
+              !property.title?.toLowerCase().includes(query) &&
+              !property.description?.toLowerCase().includes(query)
+            ) {
+              return false;
+            }
+          }
 
-      // Type filter
-      if (filters.type !== "all" && property.property_type !== filters.type) {
-        return false;
-      }
+          // Type filter
+          if (filters.type !== "all" && property && property.property_type !== filters.type) {
+            return false;
+          }
 
-      // Price filters
-      if (filters.minPrice && property.price < Number(filters.minPrice)) {
-        return false;
-      }
-      if (filters.maxPrice && property.price > Number(filters.maxPrice)) {
-        return false;
-      }
+          // Price filters
+          if (filters.minPrice && property && property.price < Number(filters.minPrice)) {
+            return false;
+          }
+          if (filters.maxPrice && property && property.price > Number(filters.maxPrice)) {
+            return false;
+          }
 
-      // Bedroom filter
-      if (filters.bedrooms && property.bedrooms < Number(filters.bedrooms)) {
-        return false;
-      }
+          // Bedroom filter
+          if (filters.bedrooms && property && property.bedrooms < Number(filters.bedrooms)) {
+            return false;
+          }
 
-      // Bathroom filter
-      if (filters.bathrooms && property.bathrooms < Number(filters.bathrooms)) {
-        return false;
-      }
+          // Bathroom filter
+          if (filters.bathrooms && property && property.bathrooms < Number(filters.bathrooms)) {
+            return false;
+          }
 
-      // Area filters
-      if (filters.minArea && property.area < Number(filters.minArea)) {
-        return false;
-      }
-      if (filters.maxArea && property.area > Number(filters.maxArea)) {
-        return false;
-      }
+          // Area filters
+          if (filters.minArea && property && property.area < Number(filters.minArea)) {
+            return false;
+          }
+          if (filters.maxArea && property && property.area > Number(filters.maxArea)) {
+            return false;
+          }
 
-      return true;
-    })
-    .sort((a, b) => {
-      switch (filters.sortBy) {
-        case "price_asc":
-          return a.price - b.price;
-        case "price_desc":
-          return b.price - a.price;
-        case "bedrooms_desc":
-          return b.bedrooms - a.bedrooms;
-        case "area_desc":
-          return b.area - a.area;
-        default:
-          return 0;
-      }
-    });
+          return true;
+        })
+        .sort((a, b) => {
+          switch (filters.sortBy) {
+            case "price_asc":
+              return a.price - b.price;
+            case "price_desc":
+              return b.price - a.price;
+            case "bedrooms_desc":
+              return b.bedrooms - a.bedrooms;
+            case "area_desc":
+              return b.area - a.area;
+            default:
+              return 0;
+          }
+        })
+    : [];
 
+  // Rest of the component stays the same
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));

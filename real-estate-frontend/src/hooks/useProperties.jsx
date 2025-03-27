@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { propertyApi } from '../services/api';
 
-// Debug mode
-const DEBUG_MODE = true;
+// Debug mode should be false in production
+const DEBUG_MODE = false;
 
 // Mock featured properties for development - enhanced with better data
 const MOCK_FEATURED_PROPERTIES = [
@@ -118,70 +118,40 @@ const MOCK_FEATURED_PROPERTIES = [
 
 // Enhanced mock properties with amenities
 MOCK_FEATURED_PROPERTIES.forEach(property => {
+    // Ensure properties have consistent structure
     property.amenities = ['WiFi', 'Parking', ...(property.features || [])];
     property.available = true;
     property.floor = property.type === 'apartment' ? Math.floor(Math.random() * 10) + 1 : 1;
     property.totalFloors = property.type === 'apartment' ? Math.floor(Math.random() * 20) + 10 : 1;
+    property.name = property.title; // Ensure name exists for backwards compatibility
+    property.location = property.location || 'Popular Location'; // Add location if missing
 });
 
 /**
- * Custom hook to fetch featured properties
+ * Get featured properties
+ * @param {number} [limit=6] - Number of properties to return
+ * @returns {Promise<import('../types/api').ApiResponse>}
  */
 export function useFeaturedProperties(limit = 6) {
-    return useQuery({
-        queryKey: ['featuredProperties'],
-        queryFn: async () => {
-            if (DEBUG_MODE) {
-                console.log('🔍 Fetching featured properties...');
-            }
-            
-            try {
-                // Try to get featured properties from API
-                const response = await propertyApi.getFeatured();
-                
-                if (DEBUG_MODE) {
-                    console.log('✅ Fetched featured properties:', response.data);
-                }
-                
-                // Transform the data if needed
-                const properties = response.data.data || [];
-                
-                if (properties.length === 0) {
-                    console.warn('No properties returned from API, using mock data instead');
-                    return MOCK_FEATURED_PROPERTIES.slice(0, limit);
-                }
-                
-                // Normalize property data
-                return properties.map(property => ({
-                    ...property,
-                    id: property.id,
-                    type: property.property_type || property.type,
-                    // Ensure required properties exist
-                    price: property.price || 0,
-                    bedrooms: property.bedrooms || 0,
-                    bathrooms: property.bathrooms || 0,
-                    area: property.area || 0,
-                    images: property.images || ['https://placehold.co/800x600/png'],
-                    amenities: property.amenities || ['WiFi', 'Parking'],
-                    available: property.available !== false
-                })).slice(0, limit);
-                
-            } catch (error) {
-                console.error('Error fetching featured properties:', error);
-                
-                if (DEBUG_MODE) {
-                    console.log('🛠️ Using mock featured properties data');
-                    return MOCK_FEATURED_PROPERTIES.slice(0, limit);
-                }
-                
-                // Always return mock data in case of error to prevent blank pages
-                return MOCK_FEATURED_PROPERTIES.slice(0, limit);
-            }
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        // In debug mode, don't re-fetch on window focus
-        refetchOnWindowFocus: !DEBUG_MODE
-    });
+  return useQuery({
+    queryKey: ['featured-properties', limit],
+    queryFn: async () => {
+      try {
+        // Don't use mock data in production
+        if (!DEBUG_MODE) {
+          const response = await propertyApi.getFeatured(limit);
+          return response.data;
+        } else {
+          console.log('Using mock featured properties');
+          return MOCK_FEATURED_PROPERTIES.slice(0, limit);
+        }
+      } catch (error) {
+        console.error('Error fetching featured properties:', error);
+        return MOCK_FEATURED_PROPERTIES.slice(0, limit);
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 }
 
 /**
@@ -210,13 +180,14 @@ export function useProperties(page = 1, perPage = 10, filters = {}) {
                 
                 const properties = response.data.data.data || [];
                 
-                if (properties.length === 0) {
-                    console.warn('No properties returned from API, using mock data instead');
+                // Only fall back to mock data in development
+                if (properties.length === 0 && process.env.NODE_ENV === 'development') {
+                    console.warn('No properties returned from API');
                     return {
-                        properties: MOCK_FEATURED_PROPERTIES,
-                        total: MOCK_FEATURED_PROPERTIES.length,
+                        properties: [],
+                        total: 0,
                         currentPage: page,
-                        lastPage: Math.ceil(MOCK_FEATURED_PROPERTIES.length / perPage)
+                        lastPage: 1
                     };
                 }
                 
@@ -229,57 +200,11 @@ export function useProperties(page = 1, perPage = 10, filters = {}) {
                 
             } catch (error) {
                 console.error('Error fetching properties:', error);
-                
-                if (DEBUG_MODE) {
-                    console.log('🛠️ Using mock properties data');
-                    
-                    // Apply filters to mock data
-                    let filteredMockProperties = [...MOCK_FEATURED_PROPERTIES];
-                    
-                    // Simple filtering for type
-                    if (filters.type && filters.type !== 'all') {
-                        filteredMockProperties = filteredMockProperties.filter(
-                            p => p.type === filters.type || p.property_type === filters.type
-                        );
-                    }
-                    
-                    // Simple price filtering
-                    if (filters.minPrice) {
-                        filteredMockProperties = filteredMockProperties.filter(
-                            p => p.price >= Number(filters.minPrice)
-                        );
-                    }
-                    
-                    if (filters.maxPrice) {
-                        filteredMockProperties = filteredMockProperties.filter(
-                            p => p.price <= Number(filters.maxPrice)
-                        );
-                    }
-                    
-                    // Pagination
-                    const startIndex = (page - 1) * perPage;
-                    const endIndex = startIndex + perPage;
-                    const paginatedProperties = filteredMockProperties.slice(startIndex, endIndex);
-                    
-                    return {
-                        properties: paginatedProperties,
-                        total: filteredMockProperties.length,
-                        currentPage: page,
-                        lastPage: Math.ceil(filteredMockProperties.length / perPage)
-                    };
-                }
-                
-                // Always return mock data in case of error
-                return {
-                    properties: MOCK_FEATURED_PROPERTIES,
-                    total: MOCK_FEATURED_PROPERTIES.length,
-                    currentPage: 1,
-                    lastPage: Math.ceil(MOCK_FEATURED_PROPERTIES.length / perPage)
-                };
+                throw error; // Let the error boundary handle it
             }
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 1000 * 60 * 5, // 5 minutes
         keepPreviousData: true,
-        refetchOnWindowFocus: !DEBUG_MODE
+        refetchOnWindowFocus: process.env.NODE_ENV === 'production'
     });
 }

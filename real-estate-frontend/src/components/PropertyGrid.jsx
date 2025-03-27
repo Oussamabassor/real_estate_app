@@ -85,20 +85,26 @@ const PropertyGrid = ({ properties = [], loading, onContactClick }) => {
                         No properties found
                     </h3>
                     <p className="mt-2 text-gray-500 max-w-sm mx-auto">
-                        We couldn't find any properties matching your criteria. Try adjusting your search filters or check back later.
+                        We couldn't find any properties that match your criteria. Try adjusting your search filters or check back later.
                     </p>
+                    <pre className="mt-4 text-left text-xs text-gray-400 max-w-md mx-auto overflow-auto hidden">
+                        {JSON.stringify(properties, null, 2)}
+                    </pre>
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="mt-6 px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-purple-200 hover:shadow-xl"
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        onClick={() => window.location.reload()}
                     >
-                        Modify Search
+                        Reload Page
                     </motion.button>
                 </motion.div>
             </div>
         );
     }
+
+    // Add debug logging
+    console.log('Rendering PropertyGrid with properties:', properties.length);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +118,7 @@ const PropertyGrid = ({ properties = [], loading, onContactClick }) => {
                 >
                     {properties.map((property, index) => (
                         <motion.div
-                            key={property.id || index}
+                            key={property.id || `property-${index}`}
                             variants={itemVariants}
                             layout
                             className="h-full"
@@ -146,4 +152,4 @@ PropertyGrid.propTypes = {
     onContactClick: PropTypes.func
 };
 
-export default PropertyGrid; 
+export default PropertyGrid;

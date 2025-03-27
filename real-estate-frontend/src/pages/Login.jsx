@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+// Update import path to use index.js
+import { useAuth } from '../hooks';
 import Layout from '../components/Layout';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
 

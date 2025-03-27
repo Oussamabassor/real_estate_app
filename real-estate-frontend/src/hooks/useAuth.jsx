@@ -267,11 +267,16 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook to use auth context
-export function useAuth() {
+// Create the useAuth hook but don't export it directly here
+const useAuthHook = () => {
   const context = useContext(AuthContext);
   if (context === null) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};
+
+// Export the hook as default and named export
+export default useAuthHook;
+
+// Create a separate index.js to re-export with the correct name

@@ -2,31 +2,32 @@
  * API Configuration
  */
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:8000/api',
-  TIMEOUT: 30000, // 30 seconds
+  // Using the correct path to our PHP backend
+  BASE_URL: 'http://localhost/real-estate/real-estate-backend',
+  TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
   ENDPOINTS: {
     // Auth
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    PROFILE: '/auth/profile',
-    LOGOUT: '/auth/logout',
+    LOGIN: '/api/auth/login.php',
+    REGISTER: '/api/auth/register.php',
+    PROFILE: '/api/auth/profile.php',
+    LOGOUT: '/api/auth/logout.php',
     
     // Properties
-    PROPERTIES: '/properties',
-    FEATURED_PROPERTIES: '/properties/featured',
+    PROPERTIES: '/api/properties/index.php',
+    FEATURED_PROPERTIES: '/api/properties/featured.php',
     
     // Reservations
-    RESERVATIONS: '/reservations',
+    RESERVATIONS: '/api/reservations/index.php',
     
     // Users
-    FAVORITES: '/favorites',
+    FAVORITES: '/api/favorites/index.php',
     
     // Stats
-    STATS: '/stats'
+    STATS: '/api/stats.php'
   }
 };
 

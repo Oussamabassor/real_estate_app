@@ -1,7 +1,3 @@
-import useAuthHook, { AuthProvider } from './useAuth.jsx';
-
-// Export the hook with the name 'useAuth'
-export const useAuth = useAuthHook;
-
-// Also export the AuthProvider
-export { AuthProvider };
+// Export all hooks
+export { useAuth, AuthProvider } from './useAuth.jsx';
+// Add additional hooks as they are created

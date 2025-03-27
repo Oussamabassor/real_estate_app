@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { propertyService } from '../services/propertyService';
 import PropertyCard from '../components/PropertyCard';
+import ApiConnectionTest from '../components/ApiConnectionTest'; // Import the API connection test component
 import {
     HomeIcon,
     MagnifyingGlassIcon,
@@ -28,6 +29,7 @@ import PropertyGrid from '../components/PropertyGrid';
 import { useFeaturedProperties } from '../hooks/useProperties';
 import { PageTransition, FadeIn, SlideIn, StaggerChildren, StaggerItem } from '../components/PageAnimations';
 import Header from '../components/Header';
+import './Home.css';
 
 const statsData = [
     { icon: HomeIcon, label: 'Properties', value: '1,000+' },
@@ -90,6 +92,8 @@ export default function Home() {
         cities: 0,
         agents: 0
     });
+    // Track if we're using fallback data
+    const [usingFallbackData, setUsingFallbackData] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const heroRef = useRef(null);
     const { scrollY } = useScroll();
@@ -114,13 +118,25 @@ export default function Home() {
             try {
                 setStatsLoading(true);
                 setStatsError(null);
-                const statsResponse = await api.get('/stats');
+                setUsingFallbackData(false);
+                
+                const statsResponse = await api.get(import.meta.env.VITE_API_BASE_URL + '/api/stats/index.php');
                 if (!statsResponse || !statsResponse.data) {
                     throw new Error('Invalid stats response format');
                 }
                 setStats(statsResponse.data);
             } catch (err) {
                 console.error('Error fetching stats:', err);
+                // Set fallback stats data
+                setStats({
+                    properties: 1250,
+                    clients: 2845,
+                    cities: 52,
+                    agents: 84,
+                    success_rate: 95
+                });
+                setUsingFallbackData(true);
+                
                 const errorMessage = err.response?.data?.message || err.message || 'An error occurred while loading stats';
                 setStatsError(errorMessage);
                 setApiError({
@@ -128,6 +144,11 @@ export default function Home() {
                     message: errorMessage,
                     details: err.response?.data || err
                 });
+                
+                // Log detailed error info in debug mode
+                if (DEBUG_MODE) {
+                    console.warn('Using fallback stats data due to network error:', err);
+                }
             } finally {
                 setStatsLoading(false);
             }
@@ -208,18 +229,15 @@ export default function Home() {
     const displayedProperties = filteredProperties.slice(0, 6);
 
     // Render a fallback UI if things are loading or there are errors
-    if (propertiesLoading || statsLoading) {
+    if (propertiesLoading) {
         if (DEBUG_MODE) console.log('⏳ Rendering loading screen');
         return <LoadingScreen />;
     }
 
-    // Improved error handling with debug info
-    if (propertiesError || statsError) {
+    // Only show error page for properties error, not for stats error
+    if (propertiesError) {
         if (DEBUG_MODE) {
-            console.error('🔴 Errors detected:', { 
-                propertiesError, 
-                statsError 
-            });
+            console.error('🔴 Properties Error detected:', propertiesError);
         }
         
         return (
@@ -235,17 +253,11 @@ export default function Home() {
                                         <p>{propertiesError}</p>
                                     </div>
                                 )}
-                                {statsError && (
-                                    <div>
-                                        <p className="font-semibold">Stats Error:</p>
-                                        <p>{statsError}</p>
-                                    </div>
-                                )}
                                 
                                 {DEBUG_MODE && (
                                     <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs overflow-auto max-h-40">
                                         <p className="font-semibold">Debug Information:</p>
-                                        <pre>{JSON.stringify({ propertiesError, statsError }, null, 2)}</pre>
+                                        <pre>{JSON.stringify({ propertiesError }, null, 2)}</pre>
                                     </div>
                                 )}
                             </div>
@@ -267,6 +279,37 @@ export default function Home() {
         <AnimatePresence mode="wait">
             <PageTransition key="home">
                 <div className="min-h-screen bg-gray-50">
+                    {/* Add API Connection Test if in debug mode */}
+                    {DEBUG_MODE && (
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+                            <ApiConnectionTest />
+                        </div>
+                    )}
+                    
+                    {/* Show warning banner if using fallback data */}
+                    {usingFallbackData && (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-yellow-700">
+                                        Network connection issue. Using offline data. Some features may be limited.
+                                        <button 
+                                            onClick={() => window.location.reload()} 
+                                            className="ml-2 font-medium underline text-yellow-700 hover:text-yellow-600"
+                                        >
+                                            Retry
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
                     {/* Enhanced Hero Section with CTA */}
                     <div className="relative min-h-screen pt-16"> {/* Added padding-top for header space */}
                         {/* Background Video/Image */}
@@ -538,7 +581,12 @@ export default function Home() {
     // Return the Layout with HomeContent
     return (
         <Layout>
-            <HomeContent />
+            <div className="home-container">
+                {/* ApiConnectionTest will automatically hide itself on successful connection */}
+                <ApiConnectionTest />
+                
+                <HomeContent />
+            </div>
         </Layout>
     );
 }

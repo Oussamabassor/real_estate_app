@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import PropTypes from 'prop-types';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks'; // Updated import path
 import { reservationApi } from '../services/api';
 import toast from 'react-hot-toast';
 

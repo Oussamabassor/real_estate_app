@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { reservationApi, propertyApi } from '../services/api';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 import {
     CalendarDaysIcon,
     CheckCircleIcon,

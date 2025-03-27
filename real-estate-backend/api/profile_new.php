@@ -1,14 +1,12 @@
 <?php
-// Set proper headers to allow CORS (Cross-Origin Resource Sharing)
-header('Access-Control-Allow-Origin: http://localhost:5173');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-header('Access-Control-Allow-Credentials: true');
+// Include CORS handling file
+require_once __DIR__ . '/../includes/cors.php';
+
+// Set content type
 header('Content-Type: application/json');
 
 // Handle preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
     exit;
 }
 
@@ -22,16 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Load required files
-require_once __DIR__ . '/../utils/Database.php';
-
-// Check for token in Authorization header
+// Get the authorization header
 $headers = getallheaders();
 $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : '';
 
-// Log the auth header for debugging
-error_log('Authorization header: ' . $authHeader);
-
+// Check if Authorization header is present and has Bearer token
 if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
     http_response_code(401); // Unauthorized
     echo json_encode([
@@ -41,38 +34,50 @@ if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches))
     exit;
 }
 
+// Extract the token
 $token = $matches[1];
-error_log('Token: ' . $token);
+error_log("Token received: " . substr($token, 0, 20) . "...");
 
 try {
-    // Verify token (simple implementation for demo)
+    // Decode the token (simple implementation for development)
     $tokenData = json_decode(base64_decode($token), true);
     
-    // Check if token has expected fields and hasn't expired
-    if (!isset($tokenData['id']) || !isset($tokenData['email']) || !isset($tokenData['exp']) ||
-        $tokenData['exp'] < time()) {
+    // Validate token structure
+    if (!isset($tokenData['id']) || !isset($tokenData['email']) || !isset($tokenData['exp'])) {
         http_response_code(401); // Unauthorized
         echo json_encode([
             'status' => 'error',
-            'message' => 'Invalid or expired token'
+            'message' => 'Invalid token structure'
         ]);
         exit;
     }
     
-    // Get user ID from token
+    // Check if token has expired
+    if ($tokenData['exp'] < time()) {
+        http_response_code(401); // Unauthorized
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Token has expired'
+        ]);
+        exit;
+    }
+    
+    // Get the user ID from the token
     $userId = $tokenData['id'];
     
-    // Get a database connection
-    $db = Database::getInstance()->getConnection();
+    // Connect to the database
+    require_once __DIR__ . '/../utils/Database.php';
+    $db = new Database();
+    $conn = $db->getConnection();
     
-    // Query for the user with the given ID
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $userId);
+    // Query for the user
+    $stmt = $conn->prepare("SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
     $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
     
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // If no user was found
+    // If user not found
     if (!$user) {
         http_response_code(404); // Not Found
         echo json_encode([
@@ -82,10 +87,7 @@ try {
         exit;
     }
     
-    // Remove sensitive information before sending the response
-    unset($user['password']);
-    
-    // Send successful response
+    // Return the user profile
     http_response_code(200);
     echo json_encode([
         'status' => 'success',
@@ -93,14 +95,12 @@ try {
         'data' => $user
     ]);
     
-    // Log successful profile retrieval
-    error_log("Profile for user {$user['email']} (ID: {$user['id']}) retrieved successfully");
-    
 } catch (Exception $e) {
-    error_log("Error during profile retrieval: " . $e->getMessage());
+    error_log("Error in profile endpoint: " . $e->getMessage());
     http_response_code(500); // Internal Server Error
     echo json_encode([
         'status' => 'error',
         'message' => 'An error occurred while processing your request'
     ]);
 }
+?>

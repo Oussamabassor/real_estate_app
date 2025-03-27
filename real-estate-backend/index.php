@@ -3,11 +3,11 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Important: Set CORS headers properly
-header('Access-Control-Allow-Origin: http://localhost:5173');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-header('Access-Control-Allow-Credentials: true');
+// Include the CORS utility
+require_once __DIR__ . '/utils/Cors.php';
+
+// Apply CORS headers with multiple allowed origins
+Cors::handleCors(['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174', '*']);
 
 // Log all requests
 error_log("Request received: " . $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI']);

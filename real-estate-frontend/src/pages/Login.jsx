@@ -1,38 +1,35 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-// Update import path to use index.js
 import { useAuth } from '../hooks';
-import Layout from '../components/Layout';
+import LoadingScreen from '../components/LoadingScreen';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
+import Layout from '../components/Layout';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loading, error: authError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get redirect path from location state or default to home
-  const from = location.state?.from?.pathname || '/';
+  // Check if there's a redirect path in the location state
+  const redirectPath = location.state?.from?.pathname || '/';
   
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
-
-  // Debug information
-  console.log('Login page rendered');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear errors when user types
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
-    // Clear login error when user makes any change
+    // Clear login error when form changes
     if (loginError) {
       setLoginError('');
     }
@@ -64,28 +61,42 @@ export default function Login() {
     setLoginError('');
     
     try {
-      console.log('Attempting login with:', { email: formData.email });
-      const result = await login(formData);
+      console.log('Submitting login with:', formData);
+      const result = await login({
+        email: formData.email,
+        password: formData.password
+      });
       
       if (result.success) {
-        console.log('Login successful, redirecting to:', from);
-        navigate(from, { replace: true });
+        console.log('Login successful, redirecting to:', redirectPath);
+        
+        // Check if there's a redirect after login in localStorage
+        const savedRedirect = localStorage.getItem('redirectAfterLogin');
+        if (savedRedirect) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(savedRedirect);
+        } else {
+          navigate(redirectPath);
+        }
       } else {
         setLoginError(result.error || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setLoginError(error.message || 'Login failed');
+      console.error('Login submission error:', error);
+      setLoginError(error.message || 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          {/* Removed problematic image */}
           <h1 className="text-center text-2xl font-bold text-purple-600">LuxeStay</h1>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
@@ -93,7 +104,7 @@ export default function Login() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link to="/register" className="font-medium text-purple-600 hover:text-purple-500">
-              Sign up
+              create a new account
             </Link>
           </p>
         </div>
@@ -101,14 +112,14 @@ export default function Login() {
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {loginError && (
+              {(loginError || authError) && (
                 <div className="rounded-md bg-red-50 p-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <LockClosedIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">{loginError}</h3>
+                      <h3 className="text-sm font-medium text-red-800">{loginError || authError}</h3>
                     </div>
                   </div>
                 </div>
@@ -174,15 +185,14 @@ export default function Login() {
                 </div>
 
                 <div className="text-sm">
-                  <Link to="/forgot-password" className="font-medium text-purple-600 hover:text-purple-500">
-                    Forgot password?
-                  </Link>
+                  <a href="#" className="font-medium text-purple-600 hover:text-purple-500">
+                    Forgot your password?
+                  </a>
                 </div>
               </div>
 
               <div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -193,14 +203,47 @@ export default function Login() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Loading...
+                      Signing in...
                     </span>
                   ) : (
                     'Sign in'
                   )}
-                </motion.button>
+                </button>
               </div>
             </form>
+
+            {/* Development Login Shortcuts - Remove in production */}
+            {import.meta.env.DEV && (
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <h3 className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Development Logins</h3>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        email: 'admin@example.com',
+                        password: 'password123'
+                      });
+                    }}
+                    className="py-1 px-2 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50"
+                  >
+                    Admin User
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        email: 'user@example.com',
+                        password: 'password123'
+                      });
+                    }}
+                    className="py-1 px-2 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50"
+                  >
+                    Regular User
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

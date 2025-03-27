@@ -1,188 +1,284 @@
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { authApi, userApi } from '../services/api';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authApi, BASE_URL } from '../services/api';
+import axios from 'axios';
 
-// Debug mode
-const DEBUG_MODE = true;
+// Create the auth context
+const AuthContext = createContext();
 
-// Create auth context
-const AuthContext = createContext(null);
-
-// Context provider component
+// Auth provider component
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [tokenValidated, setTokenValidated] = useState(false);
+  const [hasValidToken, setHasValidToken] = useState(false);
 
-  // Load user on mount
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        if (DEBUG_MODE) {
-          console.log('🔍 Checking user authentication status...');
-        }
-        
-        // Check if we have a token
-        const token = localStorage.getItem('token');
-        if (!token) {
-          if (DEBUG_MODE) {
-            console.log('⚠️ No token found, user not authenticated');
-          }
-          setLoading(false);
-          setInitialized(true);
-          setTokenValidated(false);
-          return;
-        }
-        
-        if (DEBUG_MODE) {
-          console.log('Token found in localStorage:', token.substring(0, 15) + '...');
-        }
-        
-        // Try to get user profile to validate token
-        try {
-          if (DEBUG_MODE) {
-            console.log('🔍 Fetching user profile to validate token...');
-          }
-          
-          const response = await userApi.getProfile();
-          
-          if (DEBUG_MODE) {
-            console.log('Profile response:', response);
-          }
-          
-          if (response.data.status === 'success') {
-            const userData = response.data.data;
-            setUser(userData);
-            setTokenValidated(true);
-            
-            // Save user data in localStorage for persistence
-            localStorage.setItem('user', JSON.stringify(userData));
-            
-            if (DEBUG_MODE) {
-              console.log('✅ Token validated, user authenticated:', userData.email);
-            }
-          } else {
-            throw new Error(response.data.message || 'Failed to get profile');
-          }
-        } catch (err) {
-          console.error('Error fetching user profile:', err);
-          
-          // Clear token if API returns 401 - token invalid/expired
-          if (err.response && err.response.status === 401) {
-            if (DEBUG_MODE) {
-              console.log('⚠️ Token is invalid or expired, clearing authentication data');
-            }
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setTokenValidated(false);
-          }
-          
-          // Try to use saved user data for a better user experience
-          // but mark token as invalid so sensitive operations will require re-auth
-          const savedUser = localStorage.getItem('user');
-          if (savedUser) {
-            try {
-              const parsedUser = JSON.parse(savedUser);
-              if (DEBUG_MODE) {
-                console.log('Using cached user data while token is invalid:', parsedUser.email);
-                console.log('⚠️ User will need to log in again for protected operations');
-              }
-              setUser(parsedUser);
-              setTokenValidated(false);
-            } catch (e) {
-              console.error('Error parsing saved user:', e);
-              setError('Authentication failed. Please log in again.');
-            }
-          } else {
-            setError('Authentication failed. Please log in again.');
-          }
-        }
-      } catch (err) {
-        console.error('Auth error:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setInitialized(true);
-      }
-    };
+  // Function to check if the token exists and is valid
+  const checkToken = useCallback(async () => {
+    const token = localStorage.getItem('token');
     
-    fetchUser();
-  }, []);
-
-  // Function to refresh the token
-  const refreshToken = useCallback(async () => {
-    try {
-      if (DEBUG_MODE) {
-        console.log('🔄 Attempting to refresh auth token...');
-      }
-      
-      // For now, we'll just redirect to login since we don't have a refresh token endpoint
-      // In a real app, you would call an endpoint like authApi.refreshToken()
+    if (!token) {
+      setHasValidToken(false);
       return false;
+    }
+    
+    try {
+      const response = await authApi.getProfile();
+      if (response.data && response.data.status === 'success') {
+        setUser(response.data.data);
+        setIsAuthenticated(true);
+        setHasValidToken(true);
+        return true;
+      } else {
+        localStorage.removeItem('token');
+        setHasValidToken(false);
+        return false;
+      }
     } catch (err) {
-      console.error('Token refresh error:', err);
+      console.error('Token validation error:', err);
+      localStorage.removeItem('token');
+      setHasValidToken(false);
       return false;
     }
   }, []);
 
+  // Initialize auth state
+  useEffect(() => {
+    async function initializeAuth() {
+      setLoading(true);
+      
+      try {
+        // Check localStorage for user data
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+          setIsAuthenticated(true);
+        }
+        
+        // Validate token with backend
+        await checkToken();
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        // Clear potentially invalid data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+        setInitialized(true);
+      }
+    }
+    
+    initializeAuth();
+  }, [checkToken]);
+
   // Login function
   const login = useCallback(async (credentials) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      setError(null);
+      console.log('Attempting login with credentials:', credentials);
       
-      if (DEBUG_MODE) {
-        console.log('🔑 Login attempt:', credentials.email);
-      }
-      
+      // Make the API call
       const response = await authApi.login(credentials);
       
-      if (DEBUG_MODE) {
-        console.log('Login response:', response);
+      // Debug: Log the raw response to see exactly what we're getting
+      console.log('Raw login response:', response);
+      
+      // First check if the response has a 'data' property
+      if (!response) {
+        throw new Error('No response received from server');
       }
       
-      if (response.data.status === 'success') {
-        const { token, user } = response.data.data;
+      // Check if response contains HTML (error page) instead of JSON
+      const responseData = response.data;
+      
+      // Fix the type checking issue - only check includes() if responseData is a string
+      if (typeof responseData === 'string') {
+        if (responseData.includes('<!DOCTYPE html>') || 
+            responseData.includes('<html>') || 
+            responseData.includes('<br />')) {
+          console.error('Received HTML instead of JSON:', responseData);
+          throw new Error('Invalid response format from server');
+        }
+      }
+      
+      // Check if we have a proper response structure
+      if (!responseData || typeof responseData !== 'object') {
+        console.error('Invalid response data type:', typeof responseData);
+        throw new Error('Invalid response format from server');
+      }
+      
+      // Check status
+      if (responseData.status === 'success') {
+        // Extract user and token from response
+        const { token, user } = responseData.data || {};
         
-        // Store token and user data in localStorage for persistence
+        if (!token || !user) {
+          console.error('Missing token or user in response:', responseData);
+          throw new Error('Invalid response data: missing token or user information');
+        }
+        
+        // Save token and user to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         
-        if (DEBUG_MODE) {
-          console.log('Token saved:', token.substring(0, 15) + '...');
-          console.log('User saved:', user);
-        }
-        
+        // Update state
         setUser(user);
-        setTokenValidated(true);
+        setIsAuthenticated(true);
+        setHasValidToken(true);
         
-        // Check if we need to redirect after login
-        const redirectPath = localStorage.getItem('redirectAfterLogin');
-        if (redirectPath) {
-          localStorage.removeItem('redirectAfterLogin');
-          setTimeout(() => {
-            window.location.href = redirectPath;
-          }, 100);
-        }
-        
+        console.log('Login successful for user:', user.name || user.email);
         return { success: true };
       } else {
-        throw new Error(response.data.message || 'Login failed');
+        // Handle error response with status field
+        const errorMessage = responseData.message || 'Login failed';
+        console.error('Login failed with error message:', errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (err) {
       console.error('Login error:', err);
+      
+      // Handle different error types
       let errorMessage = 'Login failed';
       
-      if (err.response) {
-        errorMessage = err.response.data.message || 'Login failed';
-        if (DEBUG_MODE) {
-          console.log('Server error response:', err.response.data);
+      // Error from API response
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } 
+      // Error response contains HTML - only check includes() if it's a string
+      else if (err.response && typeof err.response.data === 'string') {
+        if (err.response.data.includes('<br />') || err.response.data.includes('<html>')) {
+          console.error('Server returned HTML error:', err.response.data);
+          errorMessage = 'Server error occurred. Please try again later.';
         }
+      }
+      // Custom error message we threw
+      else if (err.message) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Register function
+  const register = useCallback(async (userData) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Attempting registration with:', userData);
+      
+      // First, try using the regular registration endpoint
+      let response;
+      try {
+        response = await authApi.register(userData);
+      } catch (err) {
+        console.error('Regular registration API failed, trying test endpoint:', err);
+        
+        // If regular endpoint fails, try the test endpoint
+        response = await axios.post(`${BASE_URL}/api/register_test.php`, userData, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+      
+      console.log('Registration response received:', response);
+      
+      // Check for HTML content in the response (PHP errors/warnings)
+      if (typeof response.data === 'string' && 
+          (response.data.includes('<br') || 
+           response.data.includes('<b>Warning</b>') || 
+           response.data.includes('<!DOCTYPE html>'))) {
+        
+        console.error('Response contains HTML/PHP warnings:', response.data);
+        
+        // Try to extract the JSON part from HTML response
+        const jsonMatch = response.data.match(/(\{.*\})/);
+        if (jsonMatch && jsonMatch[0]) {
+          try {
+            const jsonData = JSON.parse(jsonMatch[0]);
+            console.log('Extracted JSON from HTML response:', jsonData);
+            
+            // Check if JSON indicates an error
+            if (jsonData.status === 'error') {
+              throw new Error(jsonData.message || 'Registration failed');
+            }
+            
+            // Continue with the JSON part if it's valid
+            response.data = jsonData;
+          } catch (jsonError) {
+            console.error('Error parsing JSON from HTML response:', jsonError);
+            throw new Error('Server returned invalid response format');
+          }
+        } else {
+          throw new Error('Server returned HTML instead of JSON');
+        }
+      }
+      
+      // Check if the response has data and status
+      if (response.data && response.data.status === 'success') {
+        // Some APIs return token and user directly after registration
+        const { token, user } = response.data.data || {};
+        
+        if (token && user) {
+          console.log('Registration successful with token and user data');
+          
+          // Save token and user to localStorage
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          // Update state
+          setUser(user);
+          setIsAuthenticated(true);
+          setHasValidToken(true);
+          
+          return { success: true };
+        } else {
+          console.warn('Registration successful but missing token or user data in response');
+          return { success: true };
+        }
+      } else {
+        console.error('Registration response did not indicate success:', response.data);
+        throw new Error(response.data?.message || 'Registration failed');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      
+      // Handle different error types
+      let errorMessage = 'Registration failed';
+      
+      // Error from API response
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } 
+      // Custom error message we threw
+      else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Check for specific error messages and provide user-friendly versions
+      if (errorMessage.includes('Email already exists')) {
+        errorMessage = 'This email address is already registered. Please try logging in instead.';
+      }
+      
+      setError(errorMessage);
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     } finally {
       setLoading(false);
     }
@@ -190,93 +286,59 @@ export function AuthProvider({ children }) {
 
   // Logout function
   const logout = useCallback(() => {
-    if (DEBUG_MODE) {
-      console.log('Logging out user');
-    }
-    
+    // Simple client-side logout
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    setTokenValidated(false);
+    setIsAuthenticated(false);
+    setHasValidToken(false);
     
-    // Reload the page to clear any cached state
-    window.location.href = '/';
+    // Optional: notify server about logout
+    authApi.logout().catch(err => console.error('Logout error:', err));
   }, []);
 
-  // Register function
-  const register = useCallback(async (userData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (DEBUG_MODE) {
-        console.log('📝 Register attempt:', userData.email);
-      }
-      
-      const response = await authApi.register(userData);
-      
-      if (DEBUG_MODE) {
-        console.log('Register response:', response);
-      }
-      
-      if (response.data.status === 'success') {
-        const { token, user } = response.data.data;
-        
-        // Store token and user data in localStorage for persistence
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        setUser(user);
-        setTokenValidated(true);
-        return { success: true };
-      } else {
-        throw new Error(response.data.message || 'Registration failed');
-      }
-    } catch (err) {
-      console.error('Registration error:', err);
-      let errorMessage = 'Registration failed';
-      
-      if (err.response) {
-        errorMessage = err.response.data.message || 'Registration failed';
-        if (DEBUG_MODE) {
-          console.log('Server error response:', err.response.data);
-        }
-      }
-      
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Update user function
+  const updateUser = useCallback((updatedUser) => {
+    // Update localStorage
+    localStorage.setItem('user', JSON.stringify({
+      ...user,
+      ...updatedUser
+    }));
+    
+    // Update state
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updatedUser
+    }));
+  }, [user]);
 
-  // Context value
+  // Create the context value object
   const value = {
     user,
+    isAuthenticated,
     loading,
     error,
+    initialized,
+    hasValidToken,
     login,
     logout,
     register,
-    refreshToken,
-    isAuthenticated: !!user,
-    hasValidToken: tokenValidated,
-    initialized
+    updateUser,
+    checkToken
   };
   
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-// Create the useAuth hook but don't export it directly here
-const useAuthHook = () => {
+// Custom hook to use the auth context
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === null) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-// Export the hook as default and named export
-export default useAuthHook;
-
-// Create a separate index.js to re-export with the correct name
+}

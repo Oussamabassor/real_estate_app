@@ -11,7 +11,15 @@ class Database {
             // Log connection attempt
             error_log("Attempting to connect to database: {$config['database']} on {$config['host']}");
             
-            $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']};port={$config['port']}";
+            // Set default port if not provided in config
+            $port = isset($config['port']) ? $config['port'] : 3306;
+            
+            $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
+            
+            // Add port only if it's set
+            if ($port) {
+                $dsn .= ";port={$port}";
+            }
             
             $this->connection = new PDO(
                 $dsn,
@@ -36,8 +44,18 @@ class Database {
             
             // Attempt to connect without database to see if it exists
             try {
+                // Set default port if not provided in config
+                $port = isset($config['port']) ? $config['port'] : 3306;
+                
+                $pdsDsn = "mysql:host={$config['host']};charset={$config['charset']}";
+                
+                // Add port only if it's set
+                if ($port) {
+                    $pdsDsn .= ";port={$port}";
+                }
+                
                 $pdo = new PDO(
-                    "mysql:host={$config['host']};charset={$config['charset']};port={$config['port']}",
+                    $pdsDsn,
                     $config['username'],
                     $config['password']
                 );

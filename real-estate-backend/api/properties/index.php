@@ -4,6 +4,11 @@ require_once __DIR__ . '/../../utils/Database.php';
 require_once __DIR__ . '/../../utils/ApiResponse.php';
 require_once __DIR__ . '/../../models/Property.php';
 
+// Include the CORS handling
+require_once '../../includes/cors.php';
+
+header('Content-Type: application/json');
+
 // Set cache control headers for better client-side caching
 header('Cache-Control: private, max-age=300'); // 5 minutes cache
 header('ETag: ' . md5_file(__FILE__));
@@ -95,3 +100,4 @@ try {
 } catch (Exception $e) {
     ApiResponse::error($e->getMessage(), 500);
 }
+?>

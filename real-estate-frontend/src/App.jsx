@@ -71,34 +71,39 @@ function App() {
   }
   
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/properties" element={<Properties />} />
-        <Route path="/properties/:id" element={<PropertyDetails />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        
-        {/* Protected user routes */}
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
-        <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-        
-        {/* Admin routes */}
-        <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
-        <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
-        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-        <Route path="/admin/reservations" element={<AdminRoute><AdminReservations /></AdminRoute>} />
-        <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
-        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-        
-        {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <div className="app">
+      {/* Remove or comment out this line if it exists */}
+      {/* <OfflineNotice /> */}
+      
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          
+          {/* Protected user routes */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+          
+          {/* Admin routes */}
+          <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
+          <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/reservations" element={<AdminRoute><AdminReservations /></AdminRoute>} />
+          <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+          <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </div>
   );
 }
 

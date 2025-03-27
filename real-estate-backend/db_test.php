@@ -1,86 +1,79 @@
 <?php
-// Set content type to plain text for better readability
-header('Content-Type: text/plain');
+// Enable error reporting
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-echo "Database Connection Test\n";
-echo "=======================\n\n";
+// Set content type to JSON
+header('Content-Type: application/json');
 
-// Database configuration - hard-coded for direct testing
-$config = [
-    'host' => 'localhost',
-    'username' => 'root',
-    'password' => 'MSFadmin2005.', // Note the period at the end
-    'database' => 'real-estate',
-    'charset' => 'utf8mb4',
-    'port' => 3306
-];
-
-echo "Database Configuration:\n";
-echo "Host: {$config['host']}\n";
-echo "Database: {$config['database']}\n";
-echo "Username: {$config['username']}\n";
-echo "Password: " . str_repeat('*', strlen($config['password'])) . "\n\n";
-
-try {
-    echo "Attempting to connect to MySQL...\n";
-    
-    $dsn = "mysql:host={$config['host']};port={$config['port']}";
-    $pdo = new PDO($dsn, $config['username'], $config['password'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-    
-    echo "✅ Connected to MySQL server successfully.\n\n";
-    
-    // Check if database exists
-    echo "Checking if database exists...\n";
-    $stmt = $pdo->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$config['database']}'");
-    
-    if ($stmt->rowCount() === 0) {
-        echo "❌ Database '{$config['database']}' does not exist.\n";
-        echo "Visit /setup_database.php to create it.\n";
-    } else {
-        echo "✅ Database '{$config['database']}' exists.\n\n";
-        
-        // Connect to database
-        echo "Connecting to the database...\n";
-        $pdo = new PDO(
-            "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']};port={$config['port']}",
-            $config['username'],
-            $config['password'],
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]
-        );
-        
-        echo "✅ Connected to the database successfully.\n\n";
-        
-        // Check tables
-        echo "Tables in database:\n";
-        $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
-        
-        if (empty($tables)) {
-            echo "No tables found in the database.\n";
-            echo "Visit /setup_database.php to create tables.\n";
-        } else {
-            foreach ($tables as $table) {
-                echo "- $table\n";
-                $count = $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
-                echo "  Row count: $count\n";
-            }
+// Define the test function
+function testDatabaseConnection() {
+    try {
+        // Check if config file exists
+        $configFile = __DIR__ . '/config/database.php';
+        if (!file_exists($configFile)) {
+            return [
+                'success' => false,
+                'message' => 'Database configuration file not found',
+                'path_checked' => $configFile
+            ];
         }
-    }
-} catch (PDOException $e) {
-    echo "❌ Database connection error: " . $e->getMessage() . "\n";
-    echo "Error code: " . $e->getCode() . "\n\n";
-    
-    if ($e->getCode() === 1045) {
-        echo "This is an access denied error. Your username or password is incorrect.\n";
-        echo "Current password: " . $config['password'] . "\n";
-        echo "Double-check that the password includes any periods or special characters.\n";
-    } elseif ($e->getCode() === 2002) {
-        echo "This is a connection error. Make sure MySQL server is running and accessible.\n";
+        
+        // Load configuration
+        $config = require($configFile);
+        
+        // Validate config
+        if (!isset($config['host']) || !isset($config['username']) || !isset($config['database'])) {
+            return [
+                'success' => false,
+                'message' => 'Database configuration incomplete',
+                'config_keys' => array_keys($config)
+            ];
+        }
+        
+        // Try to connect
+        $dsn = "mysql:host={$config['host']};dbname={$config['database']}";
+        $pdo = new PDO($dsn, $config['username'], $config['password'] ?? '');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Run a test query
+        $stmt = $pdo->query('SELECT 1 as test');
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Attempt to check if users table exists
+        $tables = [];
+        $stmt = $pdo->query("SHOW TABLES");
+        while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
+            $tables[] = $row[0];
+        }
+        
+        $hasUsersTable = in_array('users', $tables);
+        
+        return [
+            'success' => true,
+            'message' => 'Database connection successful',
+            'test_query_result' => $result,
+            'database_name' => $config['database'],
+            'tables' => $tables,
+            'has_users_table' => $hasUsersTable
+        ];
+        
+    } catch (PDOException $e) {
+        return [
+            'success' => false,
+            'message' => 'Database connection failed',
+            'error' => $e->getMessage()
+        ];
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => 'General error',
+            'error' => $e->getMessage()
+        ];
     }
 }
 
-echo "\nTest completed at " . date('Y-m-d H:i:s');
+// Run the test and output the result
+$result = testDatabaseConnection();
+echo json_encode($result, JSON_PRETTY_PRINT);
+?>

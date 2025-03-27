@@ -1,0 +1,55 @@
+.api-connection-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.api-testing {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #333;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.api-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-bottom: 1px solid #f5c6cb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.retry-button {
+  background-color: #721c24;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

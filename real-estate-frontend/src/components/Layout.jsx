@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import AdminNavbar from './AdminNavbar';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks'; // Updated import path
 import PropTypes from 'prop-types';
 
 const Layout = ({ children, hideNavbar = false, hideFooter = false }) => {

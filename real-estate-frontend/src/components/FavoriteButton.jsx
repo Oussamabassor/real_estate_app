@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import PropTypes from 'prop-types';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 import toast from 'react-hot-toast';
 import { propertyApi } from '../services/api';
 

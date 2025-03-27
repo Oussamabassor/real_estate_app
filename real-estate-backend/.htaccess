@@ -13,15 +13,38 @@
     RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
-# Add CORS headers
+# Enable CORS
 <IfModule mod_headers.c>
-    Header always set Access-Control-Allow-Origin "http://localhost:5173"
-    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-    Header always set Access-Control-Allow-Credentials "true"
+    # Remove any existing Access-Control-Allow-Origin headers to prevent duplicates
+    Header unset Access-Control-Allow-Origin
     
-    # Handle OPTIONS pre-flight requests
+    # Set CORS headers dynamically with a variable
+    SetEnvIf Origin "^(http://localhost:5173|http://localhost:5174|http://localhost:3000)$" CORS_ORIGIN=$0
+    Header set Access-Control-Allow-Origin %{CORS_ORIGIN}e env=CORS_ORIGIN
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, cache-control"
+    Header set Access-Control-Allow-Credentials "true"
+    Header set Access-Control-Max-Age "86400"
+</IfModule>
+
+# Handle OPTIONS method properly without redirects
+<IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{REQUEST_METHOD} OPTIONS
     RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+# Disable directory redirects which can cause preflight issues
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Don't redirect /api/stats to /api/stats/ with trailing slash
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ $1 [L]
+</IfModule>
+
+# Force PHP to not buffer responses
+<IfModule mod_php7.c>
+    php_value output_buffering Off
+    php_value zlib.output_compression Off
 </IfModule>

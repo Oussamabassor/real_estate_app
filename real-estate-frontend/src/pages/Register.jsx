@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks'; // Updated import path
 import Layout from '../components/Layout';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
 
@@ -100,7 +99,6 @@ export default function Register() {
     <Layout>
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          {/* Removed problematic image */}
           <h1 className="text-center text-2xl font-bold text-purple-600">LuxeStay</h1>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
@@ -222,8 +220,7 @@ export default function Register() {
               </div>
 
               <div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -239,7 +236,7 @@ export default function Register() {
                   ) : (
                     'Register'
                   )}
-                </motion.button>
+                </button>
               </div>
             </form>
           </div>

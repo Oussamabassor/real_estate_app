@@ -15,7 +15,7 @@ import {
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks'; // Updated import path
 import {
   CalendarIcon,
   ChartBarIcon,

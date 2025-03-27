@@ -1,20 +1,22 @@
 <?php
+// Include the CORS handling file or set headers directly
+require_once '../../includes/cors.php';
+
+// If you're handling CORS directly in this file instead of including cors.php:
+// header('Access-Control-Allow-Origin: http://localhost:5173');
+// header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+// header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, cache-control');
+// header('Access-Control-Allow-Credentials: true');
+// header('Access-Control-Max-Age: 86400');
+
+// if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+//     exit(0);
+// }
+
 require_once __DIR__ . '/../../utils/ApiResponse.php';
 require_once __DIR__ . '/../../utils/Auth.php';
 require_once __DIR__ . '/../../models/Reservation.php';
 require_once __DIR__ . '/../../models/Property.php';
-
-// Set headers
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // Debug mode
 $debugMode = true;

@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-// Use your PHP backend URL
-export const BASE_URL = 'http://localhost:8000';
+// Use environment variable for backend URL
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/real-estate/real-estate-backend';
 
 // Debug mode - only show errors
-const DEBUG_MODE = false; // Turn off regular debug logs
+const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true'; // Use environment variable
 const ERROR_ONLY = true;  // Only show error logs
 
 // Create Axios instance with custom configuration
@@ -15,8 +15,40 @@ const api = axios.create({
     'Accept': 'application/json'
   },
   // Add withCredentials to properly handle CORS with credentials
-  withCredentials: false
+  withCredentials: true // Changed to true to handle CORS properly
 });
+
+// Add a check for API connectivity before making requests
+const isApiConnected = () => {
+  return true;  // Always return true to fix login issue
+};
+
+// Wrap axios requests to handle offline state
+const apiRequest = async (method, url, data = null, options = {}) => {
+  try {
+    const response = await api.request({
+      method,
+      url,
+      data,
+      ...options
+    });
+    
+    // Set API as connected after successful request
+    localStorage.setItem('apiConnectionStatus', 'connected');
+    
+    return response;
+  } catch (error) {
+    // Only mark as failed if it's a network error, not e.g. 404, 403, etc.
+    if (error.message === 'Network Error') {
+      localStorage.setItem('apiConnectionStatus', 'failed');
+    }
+    
+    throw error;
+  }
+};
+
+// Clear any existing offline status
+localStorage.removeItem('apiConnectionStatus');
 
 // Function to get the current token
 const getAuthToken = () => {
@@ -73,12 +105,15 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication endpoints - Using our new endpoints
+// Authentication endpoints
 export const authApi = {
-  login: (credentials) => api.post('/api/login_new.php', credentials),
-  register: (data) => api.post('/api/register.php', data),
-  getProfile: () => api.get('/api/profile_new.php'),
-  updateProfile: (data) => api.put('/api/profile.php', data),
+  login: (credentials) => {
+    console.log('Calling login API with credentials:', credentials);
+    return apiRequest('post', '/api/login_new.php', credentials);
+  },
+  register: (data) => apiRequest('post', '/api/register.php', data),
+  getProfile: () => apiRequest('get', '/api/profile_new.php'),
+  updateProfile: (data) => apiRequest('put', '/api/profile.php', data),
   logout: () => {
     // Simple client-side logout
     localStorage.removeItem('token');
@@ -104,100 +139,108 @@ export const propertyApi = {
         }
       });
       
-      // Use mock data instead of trying to fetch from the API that returns HTML
-      console.log('Using mock data for properties');
-      
-      // Generate mock properties
-      const mockProperties = [];
-      for (let i = 1; i <= 15; i++) {
-        mockProperties.push({
-          id: i,
-          title: `Featured Property ${i}`,
-          description: 'A beautiful property with modern amenities and great location.',
-          price: 500000 + (i * 100000),
-          type: i % 2 === 0 ? 'apartment' : 'bungalow',
-          bedrooms: 3 + (i % 3),
-          bathrooms: 2 + (i % 2),
-          area: 150 + (i * 25),
-          images: [`https://picsum.photos/seed/${i}/600/400`],
-          location: 'Premium Location',
-          floor: i % 2 === 0 ? i + 1 : null,
+      // Try the actual API call first
+      try {
+        const url = `/api/properties/index.php${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        if (DEBUG_MODE) {
+          console.log('Fetching properties from:', BASE_URL + url);
+        }
+        
+        const response = await apiRequest('get', url, null, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
         });
+        
+        return response;
+      } catch (apiError) {
+        console.error('Failed to fetch from API, falling back to mock data:', apiError);
+        
+        // Fallback to mock data if API call fails
+        console.log('Using mock data for properties');
+        
+        // Generate mock properties
+        const mockProperties = [];
+        for (let i = 1; i <= 15; i++) {
+          mockProperties.push({
+            id: i,
+            title: `Featured Property ${i}`,
+            description: 'A beautiful property with modern amenities and great location.',
+            price: 500000 + (i * 100000),
+            type: i % 2 === 0 ? 'apartment' : 'bungalow',
+            bedrooms: 3 + (i % 3),
+            bathrooms: 2 + (i % 2),
+            area: 150 + (i * 25),
+            images: [`https://picsum.photos/seed/${i}/600/400`],
+            location: 'Premium Location',
+            floor: i % 2 === 0 ? i + 1 : null,
+          });
+        }
+        
+        // Paginate mock data
+        const page = params.page || 1;
+        const perPage = params.per_page || 12;
+        const filteredProperties = mockProperties.filter(property => {
+          if (params.type && params.type !== 'all' && property.type !== params.type) {
+            return false;
+          }
+          if (params.minPrice && property.price < Number(params.minPrice)) {
+            return false;
+          }
+          if (params.maxPrice && property.price > Number(params.maxPrice)) {
+            return false;
+          }
+          return true;
+        });
+        
+        const start = (page - 1) * perPage;
+        const end = start + perPage;
+        const paginatedProperties = filteredProperties.slice(start, end);
+        
+        return {
+          data: {
+            data: paginatedProperties,
+            total: filteredProperties.length,
+            per_page: perPage,
+            current_page: page,
+            last_page: Math.ceil(filteredProperties.length / perPage)
+          }
+        };
       }
-      
-      // Paginate mock data
-      const page = params.page || 1;
-      const perPage = params.per_page || 12;
-      const filteredProperties = mockProperties.filter(property => {
-        if (params.type && params.type !== 'all' && property.type !== params.type) {
-          return false;
-        }
-        if (params.minPrice && property.price < Number(params.minPrice)) {
-          return false;
-        }
-        if (params.maxPrice && property.price > Number(params.maxPrice)) {
-          return false;
-        }
-        return true;
-      });
-      
-      const start = (page - 1) * perPage;
-      const end = start + perPage;
-      const paginatedProperties = filteredProperties.slice(start, end);
-      
-      return {
-        data: {
-          data: paginatedProperties,
-          total: filteredProperties.length,
-          per_page: perPage,
-          current_page: page,
-          last_page: Math.ceil(filteredProperties.length / perPage)
-        }
-      };
-      
-      // Uncomment this code if you want to try the actual API call again
-      /*
-      const url = `/api/properties${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      return axios.get(url, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      */
     } catch (err) {
       console.error('Error in getAll properties:', err);
       throw err;
     }
   },
-  getById: (id) => api.get(`/api/properties/index.php?id=${id}`),
-  create: (data) => api.post('/api/properties/index.php', data),
-  update: (id, data) => api.put(`/api/properties/index.php?id=${id}`, data),
-  delete: (id) => api.delete(`/api/properties/index.php?id=${id}`),
-  getFeatured: () => api.get('/api/properties/featured.php'),
-  search: (params) => api.get('/api/properties/index.php', { params })
+  getById: (id) => apiRequest('get', `/api/properties/index.php?id=${id}`),
+  create: (data) => apiRequest('post', '/api/properties/index.php', data),
+  update: (id, data) => apiRequest('put', `/api/properties/index.php?id=${id}`, data),
+  delete: (id) => apiRequest('delete', `/api/properties/index.php?id=${id}`),
+  getFeatured: () => apiRequest('get', '/api/properties/featured.php'),
+  search: (params) => apiRequest('get', '/api/properties/index.php', null, { params })
 };
 
 // User endpoints
 export const userApi = {
-  getProfile: () => api.get('/api/profile_new.php'),
-  getFavorites: () => api.get('/api/favorites/index.php'),
-  addFavorite: (propertyId) => api.post('/api/favorites/index.php', { property_id: propertyId }),
-  removeFavorite: (propertyId) => api.delete(`/api/favorites/index.php?id=${propertyId}`)
+  getProfile: () => apiRequest('get', '/api/profile_new.php'),
+  getFavorites: () => apiRequest('get', '/api/favorites/index.php'),
+  addFavorite: (propertyId) => apiRequest('post', '/api/favorites/index.php', { property_id: propertyId }),
+  removeFavorite: (propertyId) => apiRequest('delete', `/api/favorites/index.php?id=${propertyId}`)
 };
 
 // Reservation endpoints
 export const reservationApi = {
-  getAll: () => api.get('/api/reservations/index.php'),
-  getById: (id) => api.get(`/api/reservations/index.php?id=${id}`),
-  create: (data) => api.post('/api/reservations/index.php', data),
-  update: (id, data) => api.put(`/api/reservations/index.php?id=${id}`, data),
-  cancel: (id) => api.post(`/api/reservations/index.php?id=${id}&action=cancel`)
+  getAll: () => apiRequest('get', '/api/reservations/index.php'),
+  getById: (id) => apiRequest('get', `/api/reservations/index.php?id=${id}`),
+  create: (data) => apiRequest('post', '/api/reservations/index.php', data),
+  update: (id, data) => apiRequest('put', `/api/reservations/index.php?id=${id}`, data),
+  cancel: (id) => apiRequest('post', `/api/reservations/index.php?id=${id}&action=cancel`)
 };
 
 // Stats endpoints
 export const statsApi = {
-  getAll: () => api.get('/api/stats.php')
+  getAll: () => apiRequest('get', '/api/stats.php')
 };
 
 export default api;

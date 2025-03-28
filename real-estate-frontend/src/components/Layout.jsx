@@ -19,9 +19,11 @@ const Layout = ({ children, hideNavbar = false, hideFooter = false }) => {
   return (
     <div className="flex flex-col min-h-screen">
       {!hideNavbar && (
-        showAdminNavbar ? <AdminNavbar /> : <Navbar />
+        <div className="sticky top-0 z-50">
+          {showAdminNavbar ? <AdminNavbar /> : <Navbar />}
+        </div>
       )}
-      <main className={`flex-grow ${isAdminRoute ? 'bg-gray-50' : ''}`}>
+      <main className={`flex-grow pt-2 ${isAdminRoute ? 'bg-gray-50' : ''}`}>
         {children}
       </main>
       {!hideFooter && !isAdminRoute && <Footer />}

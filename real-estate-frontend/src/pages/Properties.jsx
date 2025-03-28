@@ -292,215 +292,217 @@ export default function Properties() {
   ];
 
   return (
-    <AnimatePresence mode="wait">
-      <PageTransition key="properties">
-        <div className="min-h-screen bg-gray-50">
-          {/* Hero Section with Enhanced Background */}
-          <FadeIn>
-            <div className="relative h-[500px] bg-gradient-to-r from-blue-600 to-purple-600 text-white overflow-hidden">
-              {/* Background Image Layer */}
-              <div
-                className="absolute inset-0 bg-center bg-no-repeat bg-cover"
-                style={{
-                  backgroundImage:
-                    "url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80')",
-                }}
-              />
-              {/* Overlay Layers */}
-              <div className="absolute inset-0 bg-black opacity-50"></div>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/50 to-blue-950/80"></div>
+    <Layout>
+      <AnimatePresence mode="wait">
+        <PageTransition key="properties">
+          <div className="min-h-screen bg-gray-50">
+            {/* Hero Section with Enhanced Background */}
+            <FadeIn>
+              <div className="relative h-[500px] bg-gradient-to-r from-blue-600 to-purple-600 text-white overflow-hidden">
+                {/* Background Image Layer */}
+                <div
+                  className="absolute inset-0 bg-center bg-no-repeat bg-cover"
+                  style={{
+                    backgroundImage:
+                      "url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80')",
+                  }}
+                />
+                {/* Overlay Layers */}
+                <div className="absolute inset-0 bg-black opacity-50"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/50 to-blue-950/80"></div>
 
-              {/* Content */}
-              <div className="relative flex flex-col justify-center h-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="text-center"
-                >
-                  <h1 className="mb-6 text-5xl font-bold text-white md:text-6xl drop-shadow-lg">
-                    Discover Your Dream Property
-                  </h1>
-                  <p className="max-w-2xl mx-auto text-xl text-white/90 drop-shadow-lg">
-                    {totalProperties} exclusive listings waiting for you to explore
-                  </p>
-                </motion.div>
-
-                {/* Enhanced Search Bar */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.6 }}
-                  className="w-full max-w-3xl mx-auto mt-12"
-                >
-                  <form onSubmit={handleSearch} className="relative group">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setIsSearchFocused(true)}
-                        onBlur={() => setIsSearchFocused(false)}
-                        placeholder="Search by property name or location..."
-                        className="w-full px-6 py-4 pr-12 text-white border bg-white/10 backdrop-blur-lg placeholder-white/60 rounded-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                      />
-                      <button
-                        type="submit"
-                        className="absolute p-2 transition-colors -translate-y-1/2 right-2 top-1/2 text-white/60 hover:text-white"
-                      >
-                        <MagnifyingGlassIcon className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </div>
-            </div>
-          </FadeIn>
-
-          {/* Main Content */}
-          <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
-            {/* Filters Section */}
-            <SlideIn>
-              <div className="p-6 mb-8 bg-white border border-gray-100 shadow-md rounded-2xl">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm"
-                    >
-                      <FunnelIcon className="w-4 h-4" />
-                      <span className="font-medium">Filters</span>
-                    </button>
-                    {Object.values(filters).some(
-                      (value) => value !== "" && value !== "all"
-                    ) && (
-                      <button
-                        onClick={resetFilters}
-                        className="flex items-center gap-2 px-4 py-2.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
-                      >
-                        <XMarkIcon className="w-4 h-4" />
-                        <span className="font-medium">Clear</span>
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleRefresh}
-                    className={`flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all ${
-                      isRefreshing ? "animate-spin" : ""
-                    }`}
+                {/* Content */}
+                <div className="relative flex flex-col justify-center h-full px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center"
                   >
-                    <ArrowPathIcon className="w-4 h-4" />
-                    <span className="font-medium">Refresh</span>
-                  </button>
+                    <h1 className="mb-6 text-5xl font-bold text-white md:text-6xl drop-shadow-lg">
+                      Discover Your Dream Property
+                    </h1>
+                    <p className="max-w-2xl mx-auto text-xl text-white/90 drop-shadow-lg">
+                      {totalProperties} exclusive listings waiting for you to explore
+                    </p>
+                  </motion.div>
+
+                  {/* Enhanced Search Bar */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
+                    className="w-full max-w-3xl mx-auto mt-12"
+                  >
+                    <form onSubmit={handleSearch} className="relative group">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onFocus={() => setIsSearchFocused(true)}
+                          onBlur={() => setIsSearchFocused(false)}
+                          placeholder="Search by property name or location..."
+                          className="w-full px-6 py-4 pr-12 text-white border bg-white/10 backdrop-blur-lg placeholder-white/60 rounded-xl border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        />
+                        <button
+                          type="submit"
+                          className="absolute p-2 transition-colors -translate-y-1/2 right-2 top-1/2 text-white/60 hover:text-white"
+                        >
+                          <MagnifyingGlassIcon className="w-6 h-6" />
+                        </button>
+                      </div>
+                    </form>
+                  </motion.div>
                 </div>
-
-                {/* Filter Options */}
-                {showFilters && (
-                  <div className="p-5 border border-gray-100 bg-gray-50 rounded-xl">
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                      {filterOptions.map((filter) => (
-                        <div key={filter.name} className="space-y-2">
-                          <label className="flex items-center gap-2 font-medium text-gray-700">
-                            <filter.icon className="w-4 h-4 text-purple-500" />
-                            {filter.label}
-                          </label>
-                          <select
-                            name={filter.name}
-                            value={filters[filter.name]}
-                            onChange={handleFilterChange}
-                            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all text-gray-800 bg-white"
-                          >
-                            {filter.options.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                      {/* Price Range Filters */}
-                      <div className="space-y-2">
-                        <label className="font-medium text-gray-700">Min Price</label>
-                        <input
-                          type="number"
-                          name="minPrice"
-                          value={filters.minPrice}
-                          onChange={handleFilterChange}
-                          placeholder="Min Price"
-                          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="font-medium text-gray-700">Max Price</label>
-                        <input
-                          type="number"
-                          name="maxPrice"
-                          value={filters.maxPrice}
-                          onChange={handleFilterChange}
-                          placeholder="Max Price"
-                          className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end mt-4">
-                      <button
-                        onClick={() => setShowFilters(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-purple-600 transition-colors hover:text-purple-800"
-                      >
-                        <span className="font-medium">Apply</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
-            </SlideIn>
+            </FadeIn>
 
-            {/* Properties Grid */}
-            <StaggerChildren>
-              <PropertyGrid
-                properties={filteredProperties}
-                loading={loading}
-                onContactClick={handleContactClick}
-              />
-            </StaggerChildren>
-
-            {/* Pagination (only show if we have properties) */}
-            {filteredProperties.length > 0 && lastPage > 1 && (
-              <div className="flex justify-center gap-2 mt-8">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 text-gray-600 bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" />
-                </button>
-                {Array.from({ length: lastPage }, (_, i) => i + 1).map(
-                  (page) => (
+            {/* Main Content */}
+            <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8">
+              {/* Filters Section */}
+              <SlideIn>
+                <div className="p-6 mb-8 bg-white border border-gray-100 shadow-md rounded-2xl">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm"
+                      >
+                        <FunnelIcon className="w-4 h-4" />
+                        <span className="font-medium">Filters</span>
+                      </button>
+                      {Object.values(filters).some(
+                        (value) => value !== "" && value !== "all"
+                      ) && (
+                        <button
+                          onClick={resetFilters}
+                          className="flex items-center gap-2 px-4 py-2.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+                        >
+                          <XMarkIcon className="w-4 h-4" />
+                          <span className="font-medium">Clear</span>
+                        </button>
+                      )}
+                    </div>
                     <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg ${
-                        currentPage === page
-                          ? "bg-purple-600 text-white"
-                          : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      onClick={handleRefresh}
+                      className={`flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all ${
+                        isRefreshing ? "animate-spin" : ""
                       }`}
                     >
-                      {page}
+                      <ArrowPathIcon className="w-4 h-4" />
+                      <span className="font-medium">Refresh</span>
                     </button>
-                  )
-                )}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === lastPage}
-                  className="p-2 text-gray-600 bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  <ChevronRightIcon className="w-5 h-5" />
-                </button>
-              </div>
-            )}
+                  </div>
+
+                  {/* Filter Options */}
+                  {showFilters && (
+                    <div className="p-5 border border-gray-100 bg-gray-50 rounded-xl">
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        {filterOptions.map((filter) => (
+                          <div key={filter.name} className="space-y-2">
+                            <label className="flex items-center gap-2 font-medium text-gray-700">
+                              <filter.icon className="w-4 h-4 text-purple-500" />
+                              {filter.label}
+                            </label>
+                            <select
+                              name={filter.name}
+                              value={filters[filter.name]}
+                              onChange={handleFilterChange}
+                              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all text-gray-800 bg-white"
+                            >
+                              {filter.options.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                        {/* Price Range Filters */}
+                        <div className="space-y-2">
+                          <label className="font-medium text-gray-700">Min Price</label>
+                          <input
+                            type="number"
+                            name="minPrice"
+                            value={filters.minPrice}
+                            onChange={handleFilterChange}
+                            placeholder="Min Price"
+                            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="font-medium text-gray-700">Max Price</label>
+                          <input
+                            type="number"
+                            name="maxPrice"
+                            value={filters.maxPrice}
+                            onChange={handleFilterChange}
+                            placeholder="Max Price"
+                            className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={() => setShowFilters(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-purple-600 transition-colors hover:text-purple-800"
+                        >
+                          <span className="font-medium">Apply</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SlideIn>
+
+              {/* Properties Grid */}
+              <StaggerChildren>
+                <PropertyGrid
+                  properties={filteredProperties}
+                  loading={loading}
+                  onContactClick={handleContactClick}
+                />
+              </StaggerChildren>
+
+              {/* Pagination (only show if we have properties) */}
+              {filteredProperties.length > 0 && lastPage > 1 && (
+                <div className="flex justify-center gap-2 mt-8">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 text-gray-600 bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    <ChevronLeftIcon className="w-5 h-5" />
+                  </button>
+                  {Array.from({ length: lastPage }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-4 py-2 rounded-lg ${
+                          currentPage === page
+                            ? "bg-purple-600 text-white"
+                            : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === lastPage}
+                    className="p-2 text-gray-600 bg-white border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    <ChevronRightIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </PageTransition>
-    </AnimatePresence>
+        </PageTransition>
+      </AnimatePresence>
+    </Layout>
   );
 }

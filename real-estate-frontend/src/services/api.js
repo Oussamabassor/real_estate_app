@@ -240,7 +240,7 @@ export const reservationApi = {
 
 // Stats endpoints
 export const statsApi = {
-  getAll: () => apiRequest('get', '/api/stats.php')
+  getAll: () => apiRequest('get', '/api/stats/index.php')
 };
 
 export default api;

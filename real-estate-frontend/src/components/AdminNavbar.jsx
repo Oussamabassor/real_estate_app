@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks';
@@ -13,15 +13,24 @@ import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 export default function AdminNavbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (isAuthenticated && user && user.role !== 'admin') {
+      console.warn('Non-admin user attempting to view admin navbar');
+      navigate('/', { replace: true });
+    }
+  }, [user, isAuthenticated, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +46,11 @@ export default function AdminNavbar() {
     { name: 'Settings', path: '/admin/settings', icon: Cog6ToothIcon },
   ];
 
+  // If not authenticated or not admin, don't render admin navbar
+  if (!isAuthenticated || (user && user.role !== 'admin')) {
+    return null;
+  }
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +60,10 @@ export default function AdminNavbar() {
             <BuildingOfficeIcon className="h-8 w-8 text-primary-600" />
             <div className="flex flex-col">
               <span className="font-bold text-xl">LuxeStay</span>
-              <span className="text-xs text-primary-600">Admin Portal</span>
+              <div className="flex items-center text-xs text-primary-600">
+                <ShieldCheckIcon className="h-3 w-3 mr-1" />
+                <span>Admin Portal</span>
+              </div>
             </div>
           </Link>
 
@@ -75,7 +92,10 @@ export default function AdminNavbar() {
                 <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
                   <UserCircleIcon className="w-6 h-6 text-primary-600" />
                 </div>
-                <span className="font-medium">{user?.name || 'Admin'}</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-medium text-sm">{user?.name || 'Admin'}</span>
+                  <span className="text-xs text-gray-500">Administrator</span>
+                </div>
               </button>
 
               <AnimatePresence>
@@ -87,7 +107,7 @@ export default function AdminNavbar() {
                     className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
                   >
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">Admin</p>
+                      <p className="text-sm font-medium text-gray-900">Admin Panel</p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
                     <Link
@@ -95,6 +115,12 @@ export default function AdminNavbar() {
                       className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-700"
                     >
                       View Site
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-700"
+                    >
+                      Profile Settings
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -156,6 +182,14 @@ export default function AdminNavbar() {
                   >
                     <HomeIcon className="w-5 h-5 mr-3" />
                     <span>View Site</span>
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    <UserCircleIcon className="w-5 h-5 mr-3" />
+                    <span>Profile Settings</span>
                   </Link>
                   <button
                     onClick={() => {

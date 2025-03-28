@@ -1,37 +1,60 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks';
 import {
   HomeIcon,
   BuildingOfficeIcon,
   CalendarIcon,
+  HeartIcon,
   UserCircleIcon,
   Bars3Icon,
   XMarkIcon,
-  HeartIcon
+  ArrowLeftOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'admin' && location.pathname === '/') {
+      navigate('/admin/dashboard');
+    }
+  }, [isAuthenticated, user, location.pathname, navigate]);
+  
+  // Close menus when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, [location.pathname]);
+  
   const handleLogout = () => {
     logout();
+    navigate('/login');
   };
   
+  // Navigation items for regular users
   const navItems = [
     { name: 'Home', path: '/', icon: HomeIcon },
     { name: 'Properties', path: '/properties', icon: BuildingOfficeIcon },
   ];
 
+  // Navigation items that require authentication (for regular users only)
   const authNavItems = [
     { name: 'Reservations', path: '/reservations', icon: CalendarIcon },
     { name: 'Favorites', path: '/favorites', icon: HeartIcon },
     { name: 'Profile', path: '/profile', icon: UserCircleIcon },
   ];
+  
+  // Don't render Navbar for admin users who should be using AdminNavbar
+  if (isAuthenticated && user?.role === 'admin' && location.pathname.startsWith('/admin')) {
+    return null;
+  }
   
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -42,7 +65,7 @@ export default function Navbar() {
             <BuildingOfficeIcon className="h-8 w-8 text-primary-600" />
             <span className="font-bold text-xl">LuxeStay</span>
           </Link>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
@@ -60,20 +83,24 @@ export default function Navbar() {
               </Link>
             ))}
             
-            {isAuthenticated && authNavItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-1 font-medium ${
-                  location.pathname === item.path
-                    ? 'text-primary-600'
-                    : 'text-gray-700 hover:text-primary-600'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {isAuthenticated && user?.role !== 'admin' && (
+              <>
+                {authNavItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center space-x-1 font-medium ${
+                      location.pathname === item.path
+                        ? 'text-primary-600'
+                        : 'text-gray-700 hover:text-primary-600'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.name}</span>
+                  </Link>
+                ))}
+              </>
+            )}
             
             {isAuthenticated ? (
               <div className="relative">
@@ -95,14 +122,31 @@ export default function Navbar() {
                       exit={{ opacity: 0, y: 10 }}
                       className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
                     >
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">Your Account</p>
+                        <p className="text-xs text-gray-500">{user?.email}</p>
+                      </div>
                       <Link
                         to="/profile"
+                        onClick={() => setIsProfileMenuOpen(false)}
                         className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-700"
                       >
-                        Profile
+                        Profile Settings
                       </Link>
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin/dashboard"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="block px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-700"
+                        >
+                          Admin Dashboard
+                        </Link>
+                      )}
                       <button
-                        onClick={handleLogout}
+                        onClick={() => {
+                          handleLogout();
+                          setIsProfileMenuOpen(false);
+                        }}
                         className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-primary-50 hover:text-primary-700"
                       >
                         Logout
@@ -112,23 +156,23 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="font-medium text-gray-700 hover:text-primary-600"
+                  className="px-4 py-2 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 font-medium"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                  className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 font-medium"
                 >
                   Register
                 </Link>
               </div>
             )}
           </nav>
-          
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -142,7 +186,7 @@ export default function Navbar() {
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -170,7 +214,7 @@ export default function Navbar() {
                   </Link>
                 ))}
                 
-                {isAuthenticated && (
+                {isAuthenticated && user?.role !== 'admin' && (
                   <>
                     {authNavItems.map((item) => (
                       <Link
@@ -187,6 +231,7 @@ export default function Navbar() {
                         <span>{item.name}</span>
                       </Link>
                     ))}
+                    
                     <button
                       onClick={() => {
                         handleLogout();
@@ -194,7 +239,7 @@ export default function Navbar() {
                       }}
                       className="flex items-center p-2 rounded-lg text-left text-gray-700 hover:bg-gray-50 w-full"
                     >
-                      <XMarkIcon className="w-5 h-5 mr-3" />
+                      <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-3" />
                       <span>Logout</span>
                     </button>
                   </>

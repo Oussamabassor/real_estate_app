@@ -6,8 +6,6 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  ArrowTopRightOnSquareIcon,
-  ArrowRightIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -84,119 +82,36 @@ export default function Footer() {
   };
 
   return (
-    <motion.footer
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.1 }}
-      variants={containerVariants}
-      className="bg-gray-50 border-t border-gray-200 pt-16 pb-8"
-    >
+    <footer className="bg-gray-50 border-t border-gray-200 pt-16 pb-8">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        {/* Newsletter Subscription */}
-        <motion.div 
-          variants={itemVariants}
-          className="relative mb-16 overflow-hidden rounded-2xl shadow-elegant"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-800 to-primary-900">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid-pattern)" />
-              </svg>
-            </div>
-            
-            {/* Circular Decorations */}
-            <div className="absolute top-0 right-0 hidden lg:block overflow-hidden">
-              <svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="200" r="200" fill="white" fillOpacity="0.05" />
-                <circle cx="200" cy="200" r="150" fill="white" fillOpacity="0.05" />
-                <circle cx="200" cy="200" r="100" fill="white" fillOpacity="0.1" />
-              </svg>
-            </div>
-          </div>
-          
-          <div className="relative z-10 px-6 py-12 sm:py-16 sm:px-12 lg:px-16">
-            <div className="max-w-3xl mx-auto lg:mx-0">
-              <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-                <motion.h3 
-                  variants={itemVariants} 
-                  className="text-2xl sm:text-3xl font-bold text-white"
-                >
-                  Stay updated with the latest properties
-                </motion.h3>
-                <motion.p 
-                  variants={itemVariants} 
-                  className="mt-4 text-base sm:text-lg text-gray-100"
-                >
-                  Subscribe to our newsletter and be the first to discover exclusive listings and market insights.
-                </motion.p>
-                
-                <motion.form 
-                  variants={itemVariants}
-                  className="mt-8 sm:flex sm:max-w-md sm:mx-auto lg:mx-0 w-full"
-                >
-                  <div className="min-w-0 flex-1">
-                    <label htmlFor="email" className="sr-only">Email address</label>
-                    <input 
-                      id="email" 
-                      type="email" 
-                      placeholder="Enter your email" 
-                      className="block w-full rounded-l-lg sm:rounded-r-none border-0 px-4 py-3.5 text-base text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2"
-                    />
-                  </div>
-                  <div className="mt-4 sm:mt-0 sm:ml-0">
-                    <button 
-                      type="submit" 
-                      className="block w-full sm:w-auto rounded-lg sm:rounded-l-none px-5 py-3.5 bg-gold-500 text-base font-medium text-white shadow hover:bg-gold-600 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 transition-all duration-200 hover:scale-105"
-                    >
-                      <span className="flex items-center justify-center">
-                        Subscribe
-                        <ArrowRightIcon className="w-4 h-4 ml-2" />
-                      </span>
-                    </button>
-                  </div>
-                </motion.form>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Main Footer Content */}
+        {/* Main Footer Content with improved styling */}
         <div className="grid grid-cols-1 gap-10 lg:gap-16 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand Section */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center space-x-2.5"
-            >
-              <div className="p-1.5 bg-primary-50 rounded-lg">
-                <BuildingOfficeIcon className="w-8 h-8 text-primary-800" />
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <BuildingOfficeIcon className="w-8 h-8 text-blue-800" />
               </div>
-              <span className="text-2xl font-bold text-primary-900">LuxeStay</span>
-            </motion.div>
-            <p className="text-gray-600">Discover extraordinary properties with LuxeStay. We offer a curated selection of premium real estate in the most desirable locations worldwide.</p>
+              <span className="text-2xl font-bold text-blue-900">LuxeStay</span>
+            </div>
+            <p className="text-gray-600 leading-relaxed">
+              Discover extraordinary properties with LuxeStay. We offer a curated selection of premium real estate in the most desirable locations worldwide.
+            </p>
             <div className="flex space-x-4 pt-2">
               {socialLinks.map((item) => (
-                <motion.a
+                <a
                   key={item.name}
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-md text-gray-600 hover:text-primary-800 hover:shadow-lg transition-all duration-300"
-                  whileHover={{ y: -3, scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-md text-gray-600 hover:text-blue-800 hover:shadow-lg transition-all duration-300"
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="sr-only">{t(item.name)}</span>
-                </motion.a>
+                </a>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Company Links */}
           <motion.div variants={itemVariants}>
@@ -336,6 +251,6 @@ export default function Footer() {
           </div>
         </motion.div>
       </div>
-    </motion.footer>
+    </footer>
   );
 }

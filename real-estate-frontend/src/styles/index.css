@@ -27,7 +27,7 @@
   }
 
   .btn-secondary {
-    @apply bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+    @apply bg-white text-primary-700 border border-primary-600 hover:bg-primary-50 focus:ring-primary-500;
   }
 
   .btn-danger {
@@ -91,4 +91,4 @@
   .loading-spinner {
     @apply animate-spin rounded-full border-t-2 border-b-2 border-primary-500;
   }
-} 
+}

@@ -1,0 +1,24 @@
+# Fix for Framer Motion Version Mismatch
+
+You're experiencing an error because you have two different versions of Framer Motion 
+(12.6.1 and 12.6.2) being used in your project.
+
+To fix this issue:
+
+1. Open your terminal
+2. Navigate to your project directory:
+   cd c:\xampp\htdocs\real_estate_app\real-estate-frontend
+
+3. Update Framer Motion to a consistent version:
+   npm install framer-motion@12.6.2 --save
+   
+   OR if you use yarn:
+   yarn add framer-motion@12.6.2
+
+4. Restart your development server:
+   npm run dev
+   
+   OR with yarn:
+   yarn dev
+
+This will ensure all components use the same version of Framer Motion.

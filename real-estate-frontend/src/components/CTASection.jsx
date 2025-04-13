@@ -45,7 +45,7 @@ export default function CTASection() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-16 items-center">
                         {/* Content */}
                         <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
-                            <motion.h2
+                            <motion.h2 
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -74,14 +74,14 @@ export default function CTASection() {
                             >
                                 <Link
                                     to="/properties"
-                                    className="btn btn-primary inline-flex items-center justify-center group"
+                                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200 group"
                                 >
                                     Browse Properties
                                     <ArrowRightIcon className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                                 </Link>
                                 <Link
                                     to="/contact"
-                                    className="btn btn-secondary inline-flex items-center justify-center"
+                                    className="inline-flex items-center justify-center px-5 py-3 border border-primary-600 text-base font-medium rounded-md text-primary-700 bg-white hover:bg-primary-50 transition-colors duration-200"
                                 >
                                     Contact Us
                                 </Link>
@@ -122,4 +122,4 @@ export default function CTASection() {
             </div>
         </section>
     );
-} 
+}

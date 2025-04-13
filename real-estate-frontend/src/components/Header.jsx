@@ -16,23 +16,23 @@ export default function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
 
-  // Enhanced scroll effect with better threshold
+  // Enhanced scroll effect with more reliable handling
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 10; // Lower threshold for quicker response
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
+      // Simplified check to ensure reliable state updates
+      setScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    // Initial check on component mount
+    // Add passive listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial check
     handleScroll();
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [scrolled]);
+  }, []); // Remove dependency on scrolled to prevent feedback loops
 
   // Logout handler
   const handleLogout = () => {
@@ -52,16 +52,30 @@ export default function Header() {
 
   return (
     <header 
-      className="fixed w-full z-50 transition-all duration-300"
+      className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'scrolled-header' : ''}`}
       style={{ 
-        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
-        boxShadow: scrolled ? '0 1px 10px rgba(0, 0, 0, 0.1)' : 'none',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        height: '80px', // Set a fixed height for the header
+        backgroundColor: scrolled ? 'rgb(255, 255, 255)' : 'transparent',
+        boxShadow: scrolled ? '0 2px 10px rgba(0, 0, 0, 0.1)' : 'none',
+        height: '80px', 
         display: 'flex',
         alignItems: 'center'
       }}
     >
+      {/* Add an additional solid background div to ensure coverage */}
+      {scrolled && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: '#ffffff',
+            zIndex: -1
+          }}
+        ></div>
+      )}
+    
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
@@ -75,28 +89,41 @@ export default function Header() {
 
           {/* Navigation links with improved visibility */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                style={{ 
-                  color: scrolled ? '#1a202c' : '#ffffff',
-                  fontWeight: '500',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  padding: '0.5rem 0'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.color = '#c8a55b';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.color = scrolled ? '#1a202c' : '#ffffff';
-                }}
-              >
-                <item.icon className="w-5 h-5 inline-block mr-1" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {/* Navigation links with proper color contrast */}
+            <Link
+              to="/"
+              style={{ 
+                color: scrolled ? '#1a202c' : '#ffffff',
+                fontWeight: '500',
+                transition: 'all 0.3s ease',
+                padding: '0.5rem 0'
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.color = '#c8a55b';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.color = scrolled ? '#1a202c' : '#ffffff';
+              }}
+            >
+              Home
+            </Link>
+            <Link
+              to="/properties"
+              style={{ 
+                color: scrolled ? '#1a202c' : '#ffffff',
+                fontWeight: '500',
+                transition: 'all 0.3s ease',
+                padding: '0.5rem 0'
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.color = '#c8a55b';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.color = scrolled ? '#1a202c' : '#ffffff';
+              }}
+            >
+              Properties
+            </Link>
 
             {isAuthenticated && authNavItems.map((item) => (
               <Link
@@ -232,3 +259,13 @@ export default function Header() {
     </header>
   );
 }
+
+// Add this to ensure the header styling is properly applied and not overridden
+// Add this to your custom-styles.css or a <style> tag in your component
+const style = document.createElement('style');
+style.textContent = `
+  .scrolled-header {
+    background-color: #ffffff !important;
+  }
+`;
+document.head.appendChild(style);

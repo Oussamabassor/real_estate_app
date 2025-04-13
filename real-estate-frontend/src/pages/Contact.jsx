@@ -102,7 +102,7 @@ export default function Contact() {
 
     return (
         <Layout>
-            {/* Enhanced Hero Section */}
+            {/* Enhanced Hero Section with Background Image */}
             <div className="relative">
                 <div className="absolute inset-0 z-0 overflow-hidden">
                     {/* Enhanced gradient overlay */}
@@ -126,15 +126,16 @@ export default function Contact() {
                     <div className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full border-2 border-white opacity-10 z-0"></div>
                     <div className="absolute bottom-1/3 left-1/3 w-40 h-40 rounded-full border border-white opacity-10 z-0"></div>
                     
-                    {/* Hero background image - using a professional office/contact image */}
+                    {/* Hero background image - using a professional contact/office image */}
                     <img 
-                        src="https://images.unsplash.com/photo-1582883693742-5d25dead1c79?ixlib=rb-1.2.1&auto=format&fit=crop&q=80&w=2070"
+                        src="https://images.unsplash.com/photo-1582883693742-5d25dead1c79?ixlib=rb-1.2.1&auto=format&fit=crop&q=80&w=2070" 
                         alt="Contact Us" 
                         className="w-full h-full object-cover"
                         style={{ opacity: 0.6, position: 'relative' }}
                     />
                 </div>
                 
+                {/* Rest of hero content remains the same */}
                 <div className="relative z-10 container mx-auto px-4 pt-36 pb-20 text-center">
                     {/* Breadcrumb navigation */}
                     <motion.nav 
@@ -206,7 +207,7 @@ export default function Contact() {
                 </div>
             </div>
 
-            {/* Rest of the contact page content */}
+            {/* Rest of the component */}
             <div className="bg-gray-50 py-16">
                 <div className="container mx-auto px-4">
                     <motion.div 

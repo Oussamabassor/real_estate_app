@@ -1,6 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Logo from './Logo';
 import {
   BuildingOfficeIcon,
   PhoneIcon,
@@ -82,22 +83,23 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-200 pt-16 pb-8">
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        {/* Main Footer Content with improved styling */}
-        <div className="grid grid-cols-1 gap-10 lg:gap-16 md:grid-cols-2 lg:grid-cols-4">
-          {/* Brand Section */}
-          <div className="space-y-6">
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <BuildingOfficeIcon className="w-8 h-8 text-blue-800" />
-              </div>
-              <span className="text-2xl font-bold text-blue-900">LuxeStay</span>
-            </div>
-            <p className="text-gray-600 leading-relaxed">
-              Discover extraordinary properties with LuxeStay. We offer a curated selection of premium real estate in the most desirable locations worldwide.
+    <footer className="bg-white pt-16 pb-8 border-t border-gray-200">
+      <div className="container mx-auto px-4">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-8 md:gap-6 lg:gap-10"
+        >
+          {/* Company Information */}
+          <motion.div variants={itemVariants} className="col-span-2 md:col-span-1">
+            {/* Logo - properly used without nesting Links */}
+            <Logo size="md" linkTo="/" />
+            <p className="mt-4 text-gray-600 max-w-xs">
+              Discover extraordinary properties with ORMVAH. We offer a curated selection of premium real estate in the most desirable locations.
             </p>
-            <div className="flex space-x-4 pt-2">
+            <div className="flex space-x-4 mt-6">
               {socialLinks.map((item) => (
                 <a
                   key={item.name}
@@ -111,14 +113,14 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          {/* Company Links */}
-          <motion.div variants={itemVariants}>
-            <h3 className="mb-6 text-lg font-semibold text-primary-800">
-              {t("footer.company")}
+          {/* Make these columns more space-efficient on laptop screens */}
+          <motion.div variants={itemVariants} className="space-y-4">
+            <h3 className="text-lg font-semibold text-primary-800">
+              Quick Links
             </h3>
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {companyLinks.map((link) => (
                 <motion.li 
                   key={link.name} 
@@ -138,12 +140,11 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Resource Links */}
-          <motion.div variants={itemVariants}>
-            <h3 className="mb-6 text-lg font-semibold text-primary-800">
-              {t("footer.resources")}
+          <motion.div variants={itemVariants} className="space-y-4">
+            <h3 className="text-lg font-semibold text-primary-800">
+              Properties
             </h3>
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {resourceLinks.map((link) => (
                 <motion.li 
                   key={link.name} 
@@ -163,93 +164,49 @@ export default function Footer() {
             </ul>
           </motion.div>
 
-          {/* Contact Information */}
-          <motion.div variants={itemVariants}>
-            <h3 className="mb-6 text-lg font-semibold text-primary-800">
-              {t("footer.contact")}
+          {/* Contact Information - Make sure it fits well on all screens */}
+          <motion.div variants={itemVariants} className="space-y-4">
+            <h3 className="text-lg font-semibold text-primary-800">
+              Contact Us
             </h3>
-            <ul className="space-y-5">
-              <motion.li
-                variants={itemVariants}
-                className="flex items-start space-x-3 text-gray-600 group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="mt-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200">
-                  <PhoneIcon className="w-4 h-4 text-primary-800" />
-                </div>
-                <div>
-                  <p className="font-medium">Phone</p>
-                  <a href="tel:+2126656521368" className="hover:text-primary-800 transition-colors">+212 6 65 65 21 68</a>
-                </div>
-              </motion.li>
-              <motion.li
-                variants={itemVariants}
-                className="flex items-start space-x-3 text-gray-600 group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="mt-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200">
-                  <EnvelopeIcon className="w-4 h-4 text-primary-800" />
-                </div>
-                <div>
-                  <p className="font-medium">Email</p>
-                  <a href="mailto:contact@luxestay.com" className="hover:text-primary-800 transition-colors">contact@luxestay.com</a>
-                </div>
-              </motion.li>
-              <motion.li
-                variants={itemVariants}
-                className="flex items-start space-x-3 text-gray-600 group"
-                whileHover={{ x: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="mt-1 flex items-center justify-center w-8 h-8 rounded-full bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200">
-                  <MapPinIcon className="w-4 h-4 text-primary-800" />
-                </div>
-                <div>
-                  <p className="font-medium">Address</p>
-                  <p>
-                    123 Avenue de l'Immobilier,
-                    <br />
-                    40000, Marrakech, Morocco
-                  </p>
-                </div>
-              </motion.li>
+            <ul className="space-y-3">
+              <li className="flex items-start">
+                <MapPinIcon className="w-5 h-5 text-primary-600 mr-3 mt-0.5 flex-shrink-0" />
+                <span className="text-gray-600">
+                  Avenue Hassan II, Marrakech 40000, Morocco
+                </span>
+              </li>
+              <li className="flex items-center">
+                <PhoneIcon className="w-5 h-5 text-primary-600 mr-3 flex-shrink-0" />
+                <a href="tel:+212522222222" className="text-gray-600 hover:text-primary-700 transition-colors">
+                  +212 522 222 222
+                </a>
+              </li>
+              <li className="flex items-center">
+                <EnvelopeIcon className="w-5 h-5 text-primary-600 mr-3 flex-shrink-0" />
+                <a href="mailto:info@ormvah.com" className="text-gray-600 hover:text-primary-700 transition-colors truncate">
+                  info@ormvah.com
+                </a>
+              </li>
             </ul>
           </motion.div>
-        </div>
-
-        {/* Bottom Bar */}
-        <motion.div
-          variants={itemVariants}
-          className="pt-8 mt-16 border-t border-gray-200"
-        >
-          <div className="flex flex-col items-center justify-between space-y-6 md:flex-row md:space-y-0">
-            {/* Copyright */}
-            <motion.div
-              variants={itemVariants}
-              className="text-sm text-gray-600"
-            >
-              &copy; {currentYear} LuxeStay. All rights reserved.
-            </motion.div>
-
-            {/* Legal Links */}
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-wrap justify-center gap-6"
-            >
-              {legalLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className="text-sm text-gray-600 hover:text-primary-800 transition-colors duration-200"
-                >
-                  {t(link.name)}
-                </Link>
-              ))}
-            </motion.div>
-          </div>
         </motion.div>
+        
+        {/* Copyright section */}
+        <div className="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} ORMVAH. All rights reserved.</p>
+          <div className="flex flex-wrap justify-center gap-6">
+            {legalLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="text-sm text-gray-600 hover:text-primary-800 transition-colors duration-200"
+              >
+                {t(link.name)}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </footer>
   );

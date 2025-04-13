@@ -1,37 +1,48 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import { HomeIcon } from '@heroicons/react/24/outline';
 
-export default function Logo({ variant = 'light', className = '' }) {
-    const textColor = variant === 'light' ? 'text-white' : 'text-gray-900';
-    const gradientFrom = variant === 'light' ? 'from-primary-500' : 'from-primary-600';
-    const gradientTo = variant === 'light' ? 'to-primary-700' : 'to-primary-800';
-    const hoverEffect = variant === 'light' ? 'hover:text-primary-200' : 'hover:text-primary-600';
+export default function Logo({ size = 'md', linkTo = '/', showText = true }) {
+  // Size variants
+  const sizes = {
+    sm: {
+      container: 'h-8 w-8',
+      icon: 'w-4 h-4',
+      text: 'text-lg ml-1.5'
+    },
+    md: {
+      container: 'h-10 w-10',
+      icon: 'w-6 h-6',
+      text: 'text-xl ml-2'
+    },
+    lg: {
+      container: 'h-12 w-12',
+      icon: 'w-7 h-7',
+      text: 'text-2xl ml-2.5'
+    }
+  };
 
-    return (
-        <Link
-            to="/"
-            className={`flex items-center gap-2 transition-all duration-300 ${className}`}
-        >
-            <div className="relative">
-                <div className="absolute inset-0 blur-sm bg-gradient-to-r from-primary-500/50 to-primary-700/50 rounded-lg transform rotate-3"></div>
-                <div className={`relative p-2 rounded-lg bg-gradient-to-r ${gradientFrom} ${gradientTo} shadow-lg`}>
-                    <HomeIcon className="w-6 h-6 text-white" />
-                </div>
-            </div>
-            <div className="flex items-center">
-                <span className={`text-2xl font-bold ${textColor}`}>Estate</span>
-                <span className={`text-2xl font-light ${textColor}`}>Hub</span>
-                <span className={`ml-1 text-sm font-medium bg-gradient-to-r ${gradientFrom} ${gradientTo} text-transparent bg-clip-text`}>
-                    Premium
-                </span>
-            </div>
-        </Link>
-    );
+  const sizeClass = sizes[size] || sizes.md;
+
+  // Create the logo content without any Link wrapper
+  const logoContent = (
+    <div className="flex items-center">
+      <div className={`${sizeClass.container} bg-primary-600 rounded-lg flex items-center justify-center shadow-sm`}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${sizeClass.icon} text-white`}>
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </div>
+      {showText && (
+        <span className={`${sizeClass.text} font-bold text-primary-800 tracking-wide`}>ORMVAH</span>
+      )}
+    </div>
+  );
+
+  // If linkTo is provided, wrap the content in a Link, otherwise just return the content
+  return linkTo ? (
+    <Link to={linkTo} className="flex items-center">
+      {logoContent}
+    </Link>
+  ) : logoContent;
 }
-
-Logo.propTypes = {
-    variant: PropTypes.oneOf(['light', 'dark']),
-    className: PropTypes.string
-};

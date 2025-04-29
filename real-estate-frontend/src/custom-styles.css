@@ -1,8 +1,13 @@
 /* Custom styles that don't rely on Tailwind */
 .hero-container {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.8), rgba(30, 64, 175, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(30, 58, 138, 0.8),
+    rgba(30, 64, 175, 0.9)
+  );
   border: 1px solid rgba(59, 130, 246, 0.3);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(8px);
 }
 
@@ -32,4 +37,114 @@
 
 .cta-button:hover {
   background-color: #fbbf24; /* yellow-400 */
+}
+
+/* Custom text sizes */
+.text-xxs {
+  font-size: 0.65rem;
+}
+
+/* Animated underline effect for links */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.link-underline:after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: currentColor;
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.link-underline:hover:after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* Card hover effects */
+.hover-card {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Improved accessibility focus styles */
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive typography system */
+@media screen and (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c8a55b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a88a4c;
+}
+
+/* Improve tap targets on mobile */
+@media (max-width: 640px) {
+  button,
+  .btn,
+  a.btn,
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

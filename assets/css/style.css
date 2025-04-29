@@ -1,0 +1,73 @@
+// ...existing code...
+
+/* Contact Page Styling */
+.contact-container {
+  background-color: #f8f9fa;
+  padding: 30px 0;
+}
+
+.contact-card {
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
+}
+
+.contact-card .card-header {
+  padding: 20px;
+}
+
+.contact-card .card-body {
+  padding: 30px;
+}
+
+.reservation-alert {
+  border-left: 4px solid #17a2b8;
+  background-color: #e3f6f9;
+}
+
+.contact-card label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.contact-card .form-control {
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #ced4da;
+}
+
+.contact-card .form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.contact-card .btn-primary {
+  padding: 12px 30px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+}
+
+.contact-card .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 123, 255, 0.2);
+}
+
+/* Reserve Button on Property Card */
+.reserve-btn {
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s;
+}
+
+.reserve-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+}
+// ...existing code...

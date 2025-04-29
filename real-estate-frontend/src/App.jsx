@@ -13,7 +13,7 @@ import './index.css'; // Make sure this imports your main CSS file with Tailwind
 // Lazy-loaded pages that exist or will be created with placeholder components
 const Home = React.lazy(() => import('./pages/Home'));
 const Properties = React.lazy(() => import('./pages/Properties'));
-const PropertyDetails = React.lazy(() => import('./pages/PropertyDetails'));
+const PropertyDetail = React.lazy(() => import('./pages/PropertyDetail'));
 const Reservations = React.lazy(() => import('./pages/Reservations'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -56,7 +56,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/properties" element={<Properties />} />
-                  <Route path="/properties/:id" element={<PropertyDetails />} />
+                  <Route path="/properties/:id" element={<PropertyDetail />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
                   

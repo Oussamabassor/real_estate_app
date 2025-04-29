@@ -27,24 +27,24 @@ export default function PropertyCard({ property, onContactClick, isFeatured }) {
               : "https://via.placeholder.com/400x300?text=No+Image"
           }
           alt={property.title}
-          className="w-full h-full object-cover"
+          className="object-cover w-full h-full"
         />
 
         {/* Featured Badge */}
         {isFeatured && (
-          <div className="absolute top-4 left-4 bg-yellow-500 text-black font-semibold text-xs px-3 py-1 rounded-full">
+          <div className="absolute px-3 py-1 text-xs font-semibold text-black bg-yellow-500 rounded-full top-4 left-4">
             Featured
           </div>
         )}
 
         {/* Save/Favorite Button */}
-        <button className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors">
+        <button className="absolute p-2 transition-colors bg-white rounded-full shadow-md top-4 right-4 hover:bg-gray-100">
           <HeartIcon className="w-5 h-5 text-gray-600 hover:text-red-500" />
         </button>
 
         {/* Price Badge */}
-        <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-lg shadow-md flex items-center space-x-1">
-          <CurrencyDollarIcon className="h-5 w-5 text-blue-600" />
+        <div className="absolute flex items-center px-4 py-2 space-x-1 bg-white rounded-lg shadow-md bottom-4 left-4">
+          <CurrencyDollarIcon className="w-5 h-5 text-blue-600" />
           <span className="font-bold text-blue-900">
             ${formatPrice(property.price)}
           </span>
@@ -54,13 +54,13 @@ export default function PropertyCard({ property, onContactClick, isFeatured }) {
       {/* Property Details */}
       <div className="p-6">
         {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
+        <h3 className="mb-2 text-xl font-bold text-gray-900 line-clamp-1">
           {property.title}
         </h3>
 
         {/* Location */}
         <div className="flex items-center mb-4 text-gray-600">
-          <MapPinIcon className="h-5 w-5 mr-1 flex-shrink-0" />
+          <MapPinIcon className="flex-shrink-0 w-5 h-5 mr-1" />
           <span className="truncate">{property.location}</span>
         </div>
 
@@ -85,15 +85,15 @@ export default function PropertyCard({ property, onContactClick, isFeatured }) {
         </div>
 
         {/* Short Description */}
-        <p className="text-gray-600 mb-5 text-sm line-clamp-2">
+        <p className="mb-5 text-sm text-gray-600 line-clamp-2">
           {property.description}
         </p>
 
         {/* View Details Button */}
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <Link
             to={`/properties/${property.id}`}
-            className="inline-flex items-center text-blue-600 font-medium hover:text-blue-800"
+            className="inline-flex items-center font-medium text-blue-600 hover:text-blue-800"
           >
             View Details
             <ArrowRightIcon className="w-4 h-4 ml-1" />
@@ -112,7 +112,7 @@ export default function PropertyCard({ property, onContactClick, isFeatured }) {
               fontSize: "0.875rem",
               transition: "all 0.3s ease",
             }}
-            className="hover:bg-amber-400 hover:shadow-md inline-flex items-center"
+            className="inline-flex items-center hover:bg-amber-400 hover:shadow-md"
           >
             <CalendarIcon className="w-4 h-4 mr-1" />
             Reserve

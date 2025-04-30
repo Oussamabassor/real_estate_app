@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { reservationApi } from "../services/api";
+import { motion } from "framer-motion";
+import AdminModal from "./AdminModal";
 import {
   CheckIcon,
   XMarkIcon,
@@ -7,6 +9,8 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
+  ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminReservations() {
@@ -17,6 +21,7 @@ export default function AdminReservations() {
   const [currentReservation, setCurrentReservation] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [successMessage, setSuccessMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch reservations from API
   const fetchReservations = async () => {
@@ -120,11 +125,25 @@ export default function AdminReservations() {
     fetchReservations();
   }, []);
 
-  // Filter reservations based on status
-  const filteredReservations =
-    statusFilter === "all"
-      ? reservations
-      : reservations.filter((res) => res.status === statusFilter);
+  // Filter reservations based on status and search term
+  const filteredReservations = reservations
+    .filter((res) =>
+      statusFilter === "all" ? true : res.status === statusFilter
+    )
+    .filter((res) => {
+      if (!searchTerm) return true;
+
+      const searchTermLower = searchTerm.toLowerCase();
+      return (
+        (res.property_name || res.propertyName || "")
+          .toLowerCase()
+          .includes(searchTermLower) ||
+        (res.user_name || res.userName || "")
+          .toLowerCase()
+          .includes(searchTermLower) ||
+        res.id.toString().includes(searchTermLower)
+      );
+    });
 
   // Open view modal
   const openViewModal = (reservation) => {
@@ -191,263 +210,443 @@ export default function AdminReservations() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Success toast notification
+  const SuccessToast = () => {
+    if (!successMessage) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="fixed top-4 right-4 flex items-center bg-green-50 border-l-4 border-green-500 py-2 px-3 shadow-md rounded-md z-50"
+      >
+        <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+        <p className="text-green-800">{successMessage}</p>
+      </motion.div>
+    );
+  };
+
+  // Error toast notification
+  const ErrorToast = () => {
+    if (!error) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="fixed top-4 right-4 flex items-center bg-red-50 border-l-4 border-red-500 py-2 px-3 shadow-md rounded-md z-50"
+      >
+        <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+        <p className="text-red-800">{error}</p>
+      </motion.div>
+    );
+  };
+
+  // Get status badge classes
+  const getStatusBadgeClasses = (status) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Render status icon
+  const StatusIcon = ({ status }) => {
+    switch (status) {
+      case "confirmed":
+        return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+      case "pending":
+        return <ClockIcon className="w-5 h-5 text-yellow-500" />;
+      case "rejected":
+        return <XCircleIcon className="w-5 h-5 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Reservations Management</h1>
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-        </div>
+      <div className="flex justify-center items-center h-full min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Reservations Management</h1>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setStatusFilter("all")}
-            className={`px-3 py-1.5 rounded-md text-sm ${
-              statusFilter === "all"
-                ? "bg-gray-700 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setStatusFilter("pending")}
-            className={`px-3 py-1.5 rounded-md text-sm ${
-              statusFilter === "pending"
-                ? "bg-yellow-600 text-white"
-                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-            }`}
-          >
-            <ClockIcon className="w-4 h-4 inline-block mr-1" />
-            Pending
-          </button>
-          <button
-            onClick={() => setStatusFilter("confirmed")}
-            className={`px-3 py-1.5 rounded-md text-sm ${
-              statusFilter === "confirmed"
-                ? "bg-green-600 text-white"
-                : "bg-green-100 text-green-700 hover:bg-green-200"
-            }`}
-          >
-            <CheckCircleIcon className="w-4 h-4 inline-block mr-1" />
-            Confirmed
-          </button>
-          <button
-            onClick={() => setStatusFilter("rejected")}
-            className={`px-3 py-1.5 rounded-md text-sm ${
-              statusFilter === "rejected"
-                ? "bg-red-600 text-white"
-                : "bg-red-100 text-red-700 hover:bg-red-200"
-            }`}
-          >
-            <XCircleIcon className="w-4 h-4 inline-block mr-1" />
-            Rejected
-          </button>
-        </div>
+    <div className="w-full mx-auto">
+      <SuccessToast />
+      <ErrorToast />
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-0">
+          Reservations Management
+        </h1>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
-          <p>{error}</p>
+      <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+        {/* Search and filter bar */}
+        <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by guest name, property or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                statusFilter === "all"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setStatusFilter("pending")}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                statusFilter === "pending"
+                  ? "bg-yellow-600 text-white"
+                  : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+              }`}
+            >
+              <ClockIcon className="w-4 h-4 inline-block mr-1" />
+              Pending
+            </button>
+            <button
+              onClick={() => setStatusFilter("confirmed")}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                statusFilter === "confirmed"
+                  ? "bg-green-600 text-white"
+                  : "bg-green-100 text-green-700 hover:bg-green-200"
+              }`}
+            >
+              <CheckCircleIcon className="w-4 h-4 inline-block mr-1" />
+              Confirmed
+            </button>
+            <button
+              onClick={() => setStatusFilter("rejected")}
+              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                statusFilter === "rejected"
+                  ? "bg-red-600 text-white"
+                  : "bg-red-100 text-red-700 hover:bg-red-200"
+              }`}
+            >
+              <XCircleIcon className="w-4 h-4 inline-block mr-1" />
+              Rejected
+            </button>
+          </div>
         </div>
-      )}
 
-      {successMessage && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
-          <p>{successMessage}</p>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Property
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredReservations.length === 0 ? (
+        {/* Reservations table with container to ensure horizontal scrolling works properly */}
+        <div className="w-full overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td
-                    colSpan="7"
-                    className="px-6 py-4 text-center text-gray-500"
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    No reservations found matching the current filter.
-                  </td>
+                    ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Property
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                  >
+                    Guest
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
+                  >
+                    Dates
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Amount
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                filteredReservations.map((reservation) => (
-                  <tr key={reservation.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {reservation.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {reservation.property_name || reservation.propertyName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {reservation.user_name || reservation.userName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(
-                        reservation.check_in_date || reservation.startDate
-                      )}{" "}
-                      to{" "}
-                      {formatDate(
-                        reservation.check_out_date || reservation.endDate
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      $
-                      {Number(
-                        reservation.total_price || reservation.totalPrice
-                      ).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium
-                        ${
-                          reservation.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : reservation.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {reservation.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => openViewModal(reservation)}
-                        className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center"
-                      >
-                        <EyeIcon className="w-4 h-4 mr-1" />
-                        View
-                      </button>
-
-                      {reservation.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(reservation.id)}
-                            className="text-green-600 hover:text-green-900 mr-3 inline-flex items-center"
-                          >
-                            <CheckIcon className="w-4 h-4 mr-1" />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReject(reservation.id)}
-                            className="text-red-600 hover:text-red-900 inline-flex items-center"
-                          >
-                            <XMarkIcon className="w-4 h-4 mr-1" />
-                            Reject
-                          </button>
-                        </>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filteredReservations.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      {searchTerm || statusFilter !== "all" ? (
+                        <p>No reservations found matching your criteria.</p>
+                      ) : (
+                        <p>No reservations available.</p>
                       )}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredReservations.map((reservation) => (
+                    <motion.tr
+                      key={reservation.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        #{reservation.id}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-medium text-gray-900 max-w-[200px] truncate">
+                        {reservation.property_name || reservation.propertyName}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                        {reservation.user_name || reservation.userName}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                        {formatDate(
+                          reservation.check_in_date || reservation.startDate
+                        )}
+                        <span className="mx-1">-</span>
+                        {formatDate(
+                          reservation.check_out_date || reservation.endDate
+                        )}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        $
+                        {Number(
+                          reservation.total_price || reservation.totalPrice
+                        ).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${getStatusBadgeClasses(reservation.status)}`}
+                        >
+                          <StatusIcon status={reservation.status} />
+                          <span className="ml-1 hidden sm:inline">
+                            {reservation.status}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-right">
+                        <button
+                          onClick={() => openViewModal(reservation)}
+                          className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center"
+                        >
+                          <EyeIcon className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">View</span>
+                        </button>
+
+                        {reservation.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(reservation.id)}
+                              className="text-green-600 hover:text-green-900 mr-3 inline-flex items-center"
+                            >
+                              <CheckIcon className="w-4 h-4 mr-1" />
+                              <span className="hidden sm:inline">Approve</span>
+                            </button>
+                            <button
+                              onClick={() => handleReject(reservation.id)}
+                              className="text-red-600 hover:text-red-900 inline-flex items-center"
+                            >
+                              <XMarkIcon className="w-4 h-4 mr-1" />
+                              <span className="hidden sm:inline">Reject</span>
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Reservation statistics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">
+            Total Reservations
+          </h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {reservations.length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Pending</h3>
+          <p className="text-2xl font-bold text-yellow-500">
+            {reservations.filter((r) => r.status === "pending").length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">Confirmed</h3>
+          <p className="text-2xl font-bold text-green-500">
+            {reservations.filter((r) => r.status === "confirmed").length}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-sm font-medium text-gray-500">
+            Revenue (Confirmed)
+          </h3>
+          <p className="text-2xl font-bold text-primary-600">
+            $
+            {reservations
+              .filter((r) => r.status === "confirmed")
+              .reduce(
+                (sum, r) => sum + Number(r.total_price || r.totalPrice),
+                0
+              )
+              .toLocaleString()}
+          </p>
         </div>
       </div>
 
       {/* Reservation View Modal */}
-      {isViewModalOpen && currentReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Reservation Details</h2>
+      <AdminModal
+        isOpen={isViewModalOpen}
+        onClose={closeViewModal}
+        title="Reservation Details"
+        size="md"
+        footer={
+          currentReservation?.status === "pending" && (
+            <div className="flex justify-end gap-3">
               <button
-                onClick={closeViewModal}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  handleReject(currentReservation.id);
+                  closeViewModal();
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <XMarkIcon className="w-6 h-6" />
+                Reject
+              </button>
+              <button
+                onClick={() => {
+                  handleApprove(currentReservation.id);
+                  closeViewModal();
+                }}
+                className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+              >
+                Approve
               </button>
             </div>
+          )
+        }
+      >
+        {currentReservation && (
+          <div className="space-y-6">
+            <div className="flex justify-center mb-4">
+              <div
+                className={`p-3 rounded-full ${
+                  currentReservation.status === "confirmed"
+                    ? "bg-green-100"
+                    : currentReservation.status === "pending"
+                    ? "bg-yellow-100"
+                    : "bg-red-100"
+                }`}
+              >
+                <StatusIcon status={currentReservation.status} />
+              </div>
+            </div>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
                   Reservation ID
                 </h3>
                 <p className="mt-1 text-sm text-gray-900">
-                  {currentReservation.id}
+                  #{currentReservation.id}
                 </p>
               </div>
 
               <div>
+                <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                <p className="mt-1">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    ${getStatusBadgeClasses(currentReservation.status)}`}
+                  >
+                    {currentReservation.status}
+                  </span>
+                </p>
+              </div>
+
+              <div className="col-span-2">
                 <h3 className="text-sm font-medium text-gray-500">Property</h3>
-                <p className="mt-1 text-sm text-gray-900">
+                <p className="mt-1 text-sm text-gray-900 font-medium">
                   {currentReservation.property_name ||
                     currentReservation.propertyName}
                 </p>
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <h3 className="text-sm font-medium text-gray-500">Guest</h3>
                 <p className="mt-1 text-sm text-gray-900">
                   {currentReservation.user_name || currentReservation.userName}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Check-in Date
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {formatDate(
-                      currentReservation.check_in_date ||
-                        currentReservation.startDate
-                    )}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Check-out Date
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {formatDate(
-                      currentReservation.check_out_date ||
-                        currentReservation.endDate
-                    )}
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Check-in Date
+                </h3>
+                <p className="mt-1 text-sm text-gray-900">
+                  {formatDate(
+                    currentReservation.check_in_date ||
+                      currentReservation.startDate
+                  )}
+                </p>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500">Amount</h3>
+                <h3 className="text-sm font-medium text-gray-500">
+                  Check-out Date
+                </h3>
                 <p className="mt-1 text-sm text-gray-900">
+                  {formatDate(
+                    currentReservation.check_out_date ||
+                      currentReservation.endDate
+                  )}
+                </p>
+              </div>
+
+              <div className="col-span-2">
+                <h3 className="text-sm font-medium text-gray-500">Amount</h3>
+                <p className="mt-1 text-sm font-medium text-gray-900">
                   $
                   {Number(
                     currentReservation.total_price ||
@@ -456,57 +655,18 @@ export default function AdminReservations() {
                 </p>
               </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                <span
-                  className={`inline-block mt-1 px-2 py-1 rounded-full text-xs font-medium
-                  ${
-                    currentReservation.status === "confirmed"
-                      ? "bg-green-100 text-green-800"
-                      : currentReservation.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {currentReservation.status}
-                </span>
-              </div>
-
               {currentReservation.notes && (
-                <div>
+                <div className="col-span-2">
                   <h3 className="text-sm font-medium text-gray-500">Notes</h3>
                   <p className="mt-1 text-sm text-gray-900">
                     {currentReservation.notes}
                   </p>
                 </div>
               )}
-
-              {currentReservation.status === "pending" && (
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => {
-                      handleReject(currentReservation.id);
-                      closeViewModal();
-                    }}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleApprove(currentReservation.id);
-                      closeViewModal();
-                    }}
-                    className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                  >
-                    Approve
-                  </button>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </AdminModal>
     </div>
   );
 }

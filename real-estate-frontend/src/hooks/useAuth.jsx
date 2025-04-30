@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi, BASE_URL } from '../services/api';
-import axios from 'axios';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { authApi, BASE_URL } from "../services/api";
+import axios from "axios";
 
 // Create the auth context
 const AuthContext = createContext();
@@ -16,28 +22,28 @@ export function AuthProvider({ children }) {
 
   // Function to check if the token exists and is valid
   const checkToken = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     if (!token) {
       setHasValidToken(false);
       return false;
     }
-    
+
     try {
       const response = await authApi.getProfile();
-      if (response.data && response.data.status === 'success') {
+      if (response.data && response.data.status === "success") {
         setUser(response.data.data);
         setIsAuthenticated(true);
         setHasValidToken(true);
         return true;
       } else {
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         setHasValidToken(false);
         return false;
       }
     } catch (err) {
-      console.error('Token validation error:', err);
-      localStorage.removeItem('token');
+      console.error("Token validation error:", err);
+      localStorage.removeItem("token");
       setHasValidToken(false);
       return false;
     }
@@ -47,22 +53,37 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function initializeAuth() {
       setLoading(true);
-      
+
       try {
         // Check localStorage for user data
-        const savedUser = localStorage.getItem('user');
+        const savedUser = localStorage.getItem("user");
         if (savedUser) {
-          setUser(JSON.parse(savedUser));
-          setIsAuthenticated(true);
+          try {
+            // Parse user data and ensure role is properly set
+            const userData = JSON.parse(savedUser);
+            const userWithRole = {
+              ...userData,
+              role: userData.role || "user", // Default to 'user' if role is missing
+            };
+
+            // Log role for debugging
+            console.log("User initialized with role:", userWithRole.role);
+
+            setUser(userWithRole);
+            setIsAuthenticated(true);
+          } catch (e) {
+            console.error("Error parsing user from localStorage:", e);
+            localStorage.removeItem("user");
+          }
         }
-        
+
         // Validate token with backend
         await checkToken();
       } catch (err) {
-        console.error('Auth initialization error:', err);
+        console.error("Auth initialization error:", err);
         // Clear potentially invalid data
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -70,7 +91,7 @@ export function AuthProvider({ children }) {
         setInitialized(true);
       }
     }
-    
+
     initializeAuth();
   }, [checkToken]);
 
@@ -78,93 +99,115 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (credentials) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      console.log('Attempting login with credentials:', credentials);
-      
+      console.log("Attempting login with credentials:", credentials);
+
       // Make the API call
       const response = await authApi.login(credentials);
-      
+
       // Debug: Log the raw response to see exactly what we're getting
-      console.log('Raw login response:', response);
-      
+      console.log("Raw login response:", response);
+
       // First check if the response has a 'data' property
       if (!response) {
-        throw new Error('No response received from server');
+        throw new Error("No response received from server");
       }
-      
+
       // Check if response contains HTML (error page) instead of JSON
       const responseData = response.data;
-      
+
       // Fix the type checking issue - only check includes() if responseData is a string
-      if (typeof responseData === 'string') {
-        if (responseData.includes('<!DOCTYPE html>') || 
-            responseData.includes('<html>') || 
-            responseData.includes('<br />')) {
-          console.error('Received HTML instead of JSON:', responseData);
-          throw new Error('Invalid response format from server');
+      if (typeof responseData === "string") {
+        if (
+          responseData.includes("<!DOCTYPE html>") ||
+          responseData.includes("<html>") ||
+          responseData.includes("<br />")
+        ) {
+          console.error("Received HTML instead of JSON:", responseData);
+          throw new Error("Invalid response format from server");
         }
       }
-      
+
       // Check if we have a proper response structure
-      if (!responseData || typeof responseData !== 'object') {
-        console.error('Invalid response data type:', typeof responseData);
-        throw new Error('Invalid response format from server');
+      if (!responseData || typeof responseData !== "object") {
+        console.error("Invalid response data type:", typeof responseData);
+        throw new Error("Invalid response format from server");
       }
-      
+
       // Check status
-      if (responseData.status === 'success') {
+      if (responseData.status === "success") {
         // Extract user and token from response
         const { token, user } = responseData.data || {};
-        
+
         if (!token || !user) {
-          console.error('Missing token or user in response:', responseData);
-          throw new Error('Invalid response data: missing token or user information');
+          console.error("Missing token or user in response:", responseData);
+          throw new Error(
+            "Invalid response data: missing token or user information"
+          );
         }
-        
+
+        // Ensure user has a role property, default to 'user' if not provided
+        const userData = {
+          ...user,
+          role: user.role || "user",
+        };
+
+        // Log user role for debugging
+        console.log("User role:", userData.role);
+
         // Save token and user to localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(userData));
+
         // Update state
-        setUser(user);
+        setUser(userData);
         setIsAuthenticated(true);
         setHasValidToken(true);
-        
-        console.log('Login successful for user:', user.name || user.email);
-        return { success: true };
+
+        console.log(
+          "Login successful for user:",
+          userData.name || userData.email
+        );
+        return {
+          success: true,
+          user: userData, // Return user data with the success response
+        };
       } else {
         // Handle error response with status field
-        const errorMessage = responseData.message || 'Login failed';
-        console.error('Login failed with error message:', errorMessage);
+        const errorMessage = responseData.message || "Login failed";
+        console.error("Login failed with error message:", errorMessage);
         throw new Error(errorMessage);
       }
     } catch (err) {
-      console.error('Login error:', err);
-      
+      console.error("Login error:", err);
+
       // Handle different error types
-      let errorMessage = 'Login failed';
-      
+      let errorMessage = "Login failed";
+
       // Error from API response
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
-      } 
+      }
       // Error response contains HTML - only check includes() if it's a string
-      else if (err.response && typeof err.response.data === 'string') {
-        if (err.response.data.includes('<br />') || err.response.data.includes('<html>')) {
-          console.error('Server returned HTML error:', err.response.data);
-          errorMessage = 'Server error occurred. Please try again later.';
+      else if (err.response && typeof err.response.data === "string") {
+        if (
+          err.response.data.includes("<br />") ||
+          err.response.data.includes("<html>")
+        ) {
+          console.error("Server returned HTML error:", err.response.data);
+          errorMessage = "Server error occurred. Please try again later.";
         }
       }
       // Custom error message we threw
       else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
-      return { 
-        success: false, 
-        error: errorMessage
+      return {
+        success: false,
+        error: errorMessage,
       };
     } finally {
       setLoading(false);
@@ -175,109 +218,123 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (userData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      console.log('Attempting registration with:', userData);
-      
+      console.log("Attempting registration with:", userData);
+
       // First, try using the regular registration endpoint
       let response;
       try {
         response = await authApi.register(userData);
       } catch (err) {
-        console.error('Regular registration API failed, trying test endpoint:', err);
-        
+        console.error(
+          "Regular registration API failed, trying test endpoint:",
+          err
+        );
+
         // If regular endpoint fails, try the test endpoint
-        response = await axios.post(`${BASE_URL}/api/register_test.php`, userData, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
+        response = await axios.post(
+          `${BASE_URL}/api/register_test.php`,
+          userData,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-        });
+        );
       }
-      
-      console.log('Registration response received:', response);
-      
+
+      console.log("Registration response received:", response);
+
       // Check for HTML content in the response (PHP errors/warnings)
-      if (typeof response.data === 'string' && 
-          (response.data.includes('<br') || 
-           response.data.includes('<b>Warning</b>') || 
-           response.data.includes('<!DOCTYPE html>'))) {
-        
-        console.error('Response contains HTML/PHP warnings:', response.data);
-        
+      if (
+        typeof response.data === "string" &&
+        (response.data.includes("<br") ||
+          response.data.includes("<b>Warning</b>") ||
+          response.data.includes("<!DOCTYPE html>"))
+      ) {
+        console.error("Response contains HTML/PHP warnings:", response.data);
+
         // Try to extract the JSON part from HTML response
         const jsonMatch = response.data.match(/(\{.*\})/);
         if (jsonMatch && jsonMatch[0]) {
           try {
             const jsonData = JSON.parse(jsonMatch[0]);
-            console.log('Extracted JSON from HTML response:', jsonData);
-            
+            console.log("Extracted JSON from HTML response:", jsonData);
+
             // Check if JSON indicates an error
-            if (jsonData.status === 'error') {
-              throw new Error(jsonData.message || 'Registration failed');
+            if (jsonData.status === "error") {
+              throw new Error(jsonData.message || "Registration failed");
             }
-            
+
             // Continue with the JSON part if it's valid
             response.data = jsonData;
           } catch (jsonError) {
-            console.error('Error parsing JSON from HTML response:', jsonError);
-            throw new Error('Server returned invalid response format');
+            console.error("Error parsing JSON from HTML response:", jsonError);
+            throw new Error("Server returned invalid response format");
           }
         } else {
-          throw new Error('Server returned HTML instead of JSON');
+          throw new Error("Server returned HTML instead of JSON");
         }
       }
-      
+
       // Check if the response has data and status
-      if (response.data && response.data.status === 'success') {
+      if (response.data && response.data.status === "success") {
         // Some APIs return token and user directly after registration
         const { token, user } = response.data.data || {};
-        
+
         if (token && user) {
-          console.log('Registration successful with token and user data');
-          
+          console.log("Registration successful with token and user data");
+
           // Save token and user to localStorage
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-          
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(user));
+
           // Update state
           setUser(user);
           setIsAuthenticated(true);
           setHasValidToken(true);
-          
+
           return { success: true };
         } else {
-          console.warn('Registration successful but missing token or user data in response');
+          console.warn(
+            "Registration successful but missing token or user data in response"
+          );
           return { success: true };
         }
       } else {
-        console.error('Registration response did not indicate success:', response.data);
-        throw new Error(response.data?.message || 'Registration failed');
+        console.error(
+          "Registration response did not indicate success:",
+          response.data
+        );
+        throw new Error(response.data?.message || "Registration failed");
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      
+      console.error("Registration error:", err);
+
       // Handle different error types
-      let errorMessage = 'Registration failed';
-      
+      let errorMessage = "Registration failed";
+
       // Error from API response
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
-      } 
+      }
       // Custom error message we threw
       else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       // Check for specific error messages and provide user-friendly versions
-      if (errorMessage.includes('Email already exists')) {
-        errorMessage = 'This email address is already registered. Please try logging in instead.';
+      if (errorMessage.includes("Email already exists")) {
+        errorMessage =
+          "This email address is already registered. Please try logging in instead.";
       }
-      
+
       setError(errorMessage);
-      return { 
-        success: false, 
-        error: errorMessage
+      return {
+        success: false,
+        error: errorMessage,
       };
     } finally {
       setLoading(false);
@@ -287,30 +344,36 @@ export function AuthProvider({ children }) {
   // Logout function
   const logout = useCallback(() => {
     // Simple client-side logout
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
     setHasValidToken(false);
-    
+
     // Optional: notify server about logout
-    authApi.logout().catch(err => console.error('Logout error:', err));
+    authApi.logout().catch((err) => console.error("Logout error:", err));
   }, []);
 
   // Update user function
-  const updateUser = useCallback((updatedUser) => {
-    // Update localStorage
-    localStorage.setItem('user', JSON.stringify({
-      ...user,
-      ...updatedUser
-    }));
-    
-    // Update state
-    setUser(prevUser => ({
-      ...prevUser,
-      ...updatedUser
-    }));
-  }, [user]);
+  const updateUser = useCallback(
+    (updatedUser) => {
+      // Update localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          ...updatedUser,
+        })
+      );
+
+      // Update state
+      setUser((prevUser) => ({
+        ...prevUser,
+        ...updatedUser,
+      }));
+    },
+    [user]
+  );
 
   // Create the context value object
   const value = {
@@ -324,21 +387,17 @@ export function AuthProvider({ children }) {
     logout,
     register,
     updateUser,
-    checkToken
+    checkToken,
   };
-  
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Custom hook to use the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
